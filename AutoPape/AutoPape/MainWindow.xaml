@@ -7,8 +7,8 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
 
-    <ScrollViewer HorizontalAlignment="Left" Height="405" Margin="243,0,0,0" VerticalAlignment="Top" Width="295" Name="scrollPanel">
-        <StackPanel Height="Auto" Width="Auto" Name="threadPanel"/>
+    <ScrollViewer HorizontalAlignment="Left" Height="Auto" Margin="0,10,0,10" VerticalAlignment="Top" Width="680" Name="scrollPanel">
+        <WrapPanel Height="Auto" Width="Auto" Name="threadPanel"/>
     </ScrollViewer>
 
 </Window>
