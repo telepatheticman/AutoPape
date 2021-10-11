@@ -11,10 +11,12 @@ using System.IO;
 using System.Drawing;
 using Image = System.Windows.Controls.Image;
 using System.Windows;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
-namespace AutoPape
+namespace Catalog
 {
-    class CatalogThread
+    public class CatalogThread
     {
         public Image threadImage;
         public string imgurl { get; set; } = "deleted";
@@ -22,25 +24,41 @@ namespace AutoPape
         public string teaser { get; set; }
         public string threadId { get; set; }
     }
-    class Catalog
+    public class Catalog
     {
         string board;
         string url;
         Regex rxFullJson = new Regex("\\{\\\"threads\\\".*?\\};");
         Regex rxThreads = new Regex("\\\"[0-9]*\\\":.*?},.*?\\},");
-        List<CatalogThread> catalogThreads;
+        public List<CatalogThread> catalogThreads;
+        public StackPanel threadImages = null;
+        WrapPanel wrapPanel = null;
         //List<System.Windows.Controls.StackPanel> 
         HttpClient client;
+        AutoPape.Thread threadInfo = null;
         int numThreads { get { return catalogThreads.Count; } }
-        public Catalog(string board)
+
+        public Catalog()
+        {
+            
+            this.board = "wg";
+            url = $"https://boards.4chan.org/{board}/catalog";
+            catalogThreads = new List<CatalogThread>();
+            client = new HttpClient();
+            //buildCatalogInfoAsync();
+
+        }
+        public Catalog(string board, WrapPanel wrapPanel, StackPanel stackPanel)
         {
             this.board = board;
+            this.wrapPanel = wrapPanel;
+            this.threadImages = stackPanel;
             url = $"https://boards.4chan.org/{board}/catalog";
             catalogThreads = new List<CatalogThread>();
             client = new HttpClient();
         }
 
-        void buildCatalogInfo(WrapPanel panel)
+        void buildCatalogInfo()
         {
             var task = client.GetStringAsync(url);
             string result = task.GetAwaiter().GetResult();
@@ -52,66 +70,35 @@ namespace AutoPape
             {
                 string threadSanitized = thread.Value.Substring(thread.Value.IndexOf(':') + 1).TrimEnd(',', '}') + "}";
                 catalogThreads.Add(JsonSerializer.Deserialize<CatalogThread>(threadSanitized));
-                catalogThreads.Last().sub = catalogThreads.Last().sub.Replace("&amp;", "&");
-                catalogThreads.Last().sub = catalogThreads.Last().sub.Replace("&quot;", "\"");;
-                catalogThreads.Last().sub = catalogThreads.Last().sub.Replace("&#039;", "'");
-                catalogThreads.Last().sub = catalogThreads.Last().sub.Replace("&lt;", "<");
-                catalogThreads.Last().sub = catalogThreads.Last().sub.Replace("&gt;", ">");
-                catalogThreads.Last().teaser = catalogThreads.Last().teaser.Replace("&amp;", "&");
-                catalogThreads.Last().teaser = catalogThreads.Last().teaser.Replace("&quot;", "\"");
-                catalogThreads.Last().teaser = catalogThreads.Last().teaser.Replace("&#039;", "'");
-                catalogThreads.Last().teaser = catalogThreads.Last().teaser.Replace("&lt;", "<");
-                catalogThreads.Last().teaser = catalogThreads.Last().teaser.Replace("&gt;", ">");
+                
+                catalogThreads.Last().sub = AutoPape.Utility.cleanHTMLString(catalogThreads.Last().sub);
+
+                catalogThreads.Last().teaser = AutoPape.Utility.cleanHTMLString(catalogThreads.Last().teaser);
+
                 catalogThreads.Last().threadId = thread.Value.Split(':').First().Trim('\"');
-                byte[] thumbNailByte;
-                if (catalogThreads.Last().imgurl != "deleted")
-                {
-                    var thumbNailTask = client.GetByteArrayAsync($"https://i.4cdn.org/{board}/{catalogThreads.Last().imgurl}s.jpg");
-                    thumbNailByte = thumbNailTask.GetAwaiter().GetResult();
-                }
-                else
-                {
-                    ImageConverter converter = new ImageConverter();
-                    thumbNailByte = (byte[])converter.ConvertTo(Properties.Resources.NoImage, typeof(byte[]));
-                }
+                catalogThreads.Last().threadImage =
+                    AutoPape.Utility.imageFromURL(
+                        $"https://i.4cdn.org/{board}/{catalogThreads.Last().imgurl}s.jpg",
+                        client,
+                        catalogThreads.Last().imgurl == "deleted");
 
-                /*try
-                {
-                    var thumbNailTask = client.GetByteArrayAsync($"https://i.4cdn.org/{board}/{catalogThreads.Last().imgurl}s.jpg");
-                    thumbNailByte = thumbNailTask.GetAwaiter().GetResult();
-                }
-                catch(Exception ex)
-                {
-                    ImageConverter converter = new ImageConverter();
-                    thumbNailByte = (byte[])converter.ConvertTo(Properties.Resources.NoImage, typeof(byte[]));
-                }*/
-
-                MemoryStream ms = new MemoryStream(thumbNailByte);
-                //System.Drawing.Bitmap thumbNailBitmap = new System.Drawing.Bitmap(ms);
                 System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                 {
-                    ms.Position = 0;
 
-                    System.Windows.Media.Imaging.BitmapImage thumbNailBitmap = new System.Windows.Media.Imaging.BitmapImage();
-                    //thumbNailBitmap = ;
-                    thumbNailBitmap.BeginInit();
-                    thumbNailBitmap.StreamSource = ms;
-                    thumbNailBitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                    thumbNailBitmap.EndInit();
+                    
 
-                    catalogThreads.Last().threadImage = new Image();
-                    catalogThreads.Last().threadImage.Source = thumbNailBitmap;
-
-                    StackPanel Item = new StackPanel();
+                    Button Item = new Button();
+                    StackPanel content = new StackPanel();
+                    content.VerticalAlignment = VerticalAlignment.Top;
+                    Item.VerticalContentAlignment = VerticalAlignment.Top;
+                    Item.Content = content;
                     Item.Width = 200;
                     Item.Height = Double.NaN;
                     Item.Margin = new Thickness(10);
+                    string s = catalogThreads.Last().threadId;
+                    Item.Click += (o, e) => setThread(s);
 
-                    Item.Children.Add(catalogThreads.Last().threadImage);
-
-                    //panel.Children.Add(catalogThreads.Last().threadImage);
-
-                    //threadPanel.Children.Add(Bitmap);
+                    content.Children.Add(catalogThreads.Last().threadImage);
 
                     TextBlock block = new TextBlock();
                     block.TextWrapping = TextWrapping.Wrap;
@@ -120,15 +107,23 @@ namespace AutoPape
                     block.Text = subject.Length > 200 ? subject.Substring(0, 200) + "..." : subject;
                     block.Text += "\n";
                     block.Text += tease.Length > 500 ? tease.Substring(0, 500) + "..." : tease;
-                    Item.Children.Add(block);
-                    panel.Children.Add(Item);
+                    content.Children.Add(block);
+                    wrapPanel.Children.Add(Item);
+                    
                 });
             }
         }
 
-        public async void buildCatalogInfoAsync(WrapPanel panel)
+        public async void buildCatalogInfoAsync()
         {
-            await Task.Run(() => buildCatalogInfo(panel)); ;
+            await Task.Run(() => buildCatalogInfo()); ;
+        }
+
+        private void setThread(string threadID)
+        {
+            threadInfo = new AutoPape.Thread(board, threadID, threadImages);
+            threadInfo.clearChildren();
+            threadInfo.buildImagesAsync();
         }
     }
 }

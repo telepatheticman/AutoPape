@@ -21,6 +21,7 @@ using System.Xml.XPath;
 using System.Text.Json;
 using System.Drawing;
 using System.Drawing.Imaging;
+using Catalog;
 
 public class catalogThread
 {
@@ -32,12 +33,7 @@ public class catalogThread
     public string threadId { get; set; }
 }
 
-public class threadImage
-{
-    public string imagename { get; set; }
-    public string imageurl { get; set; }
-    public string thumburl { get; set; }
-}
+
 
 namespace AutoPape
 {
@@ -155,10 +151,16 @@ namespace AutoPape
 
         public MainWindow()
         {
-            InitializeComponent();
 
-            Catalog catalog = new Catalog("wg");
-            catalog.buildCatalogInfoAsync(threadPanel);
+            //ThreadCatalog catalog = new ThreadCatalog("wg");
+            InitializeComponent();
+            //catalog.init();
+            //testControl.DataContext = catalog;
+            //this.RemoveLogicalChild(catalog.scrollPanelCatalog);
+            //stackPanelTest.Children.Add(catalog.scrollPanelCatalog);
+            //catalog.testButton.IsEnabled = false;
+            Catalog.Catalog catalog = new Catalog.Catalog("wg", catalogPanel, threadPanel);
+            catalog.buildCatalogInfoAsync();
             
         }
     }
