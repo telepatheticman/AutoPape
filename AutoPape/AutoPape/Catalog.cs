@@ -96,14 +96,15 @@ namespace Catalog
                     Item.Height = Double.NaN;
                     Item.Margin = new Thickness(10);
                     string s = catalogThreads.Last().threadId;
-                    Item.Click += (o, e) => setThread(s);
+                    string subject = catalogThreads.Last().sub;
+                    string tease = catalogThreads.Last().teaser;
+                    Item.Click += (o, e) => setThread(s, subject, tease);
 
                     content.Children.Add(catalogThreads.Last().threadImage);
 
                     TextBlock block = new TextBlock();
                     block.TextWrapping = TextWrapping.Wrap;
-                    string subject = catalogThreads.Last().sub;
-                    string tease = catalogThreads.Last().teaser;
+
                     block.Text = subject.Length > 200 ? subject.Substring(0, 200) + "..." : subject;
                     block.Text += "\n";
                     block.Text += tease.Length > 500 ? tease.Substring(0, 500) + "..." : tease;
@@ -119,11 +120,12 @@ namespace Catalog
             await Task.Run(() => buildCatalogInfo()); ;
         }
 
-        private void setThread(string threadID)
+        private void setThread(string threadID, string sub, string teaser)
         {
-            threadInfo = new AutoPape.Thread(board, threadID, threadImages);
+            threadInfo = new AutoPape.Thread(board, threadID, threadImages, sub, teaser);
             threadInfo.clearChildren();
-            threadInfo.buildImagesAsync();
+            threadInfo.buildThreadFromWebAsync();
+            //threadInfo.saveThread();
         }
     }
 }
