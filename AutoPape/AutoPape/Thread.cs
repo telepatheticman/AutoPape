@@ -111,12 +111,6 @@ namespace AutoPape
                         "https://" + thread.thumburl, 
                         client, 
                         thread.thumburl == null);
-                /*thread.full =
-                    Utility.imageFromURL(
-                        "https://" + thread.imageurl,
-                        client,
-                        thread.imageurl == null);
-                */
 
 
                 System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate

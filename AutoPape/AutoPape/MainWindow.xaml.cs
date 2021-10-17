@@ -22,6 +22,7 @@ using System.Text.Json;
 using System.Drawing;
 using System.Drawing.Imaging;
 using Catalog;
+using System.Windows.Forms;
 
 public class catalogThread
 {
@@ -118,7 +119,7 @@ namespace AutoPape
                 }
                 //System.Windows.Controls.Image cThumb = new System.Windows.Controls.Image();
                 //cThumb.Source = thumbNailBitmap;
-                Application.Current.Dispatcher.Invoke((Action)delegate
+                System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                 {
                     ms.Position = 0;
 
@@ -159,8 +160,16 @@ namespace AutoPape
             //this.RemoveLogicalChild(catalog.scrollPanelCatalog);
             //stackPanelTest.Children.Add(catalog.scrollPanelCatalog);
             //catalog.testButton.IsEnabled = false;
+
+            SettingsManager manager = new SettingsManager();
+            manager.loadSettings();
+
+            Utility.test();
+
             Catalog.Catalog catalog = new Catalog.Catalog("wg", catalogPanel, threadPanel);
             catalog.buildCatalogInfoAsync();
+
+            //Screen screen = new Screen()// = Screen.AllScreens;
             
         }
     }
