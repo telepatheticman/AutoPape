@@ -93,6 +93,7 @@
     <Compile Include="SettingsManager.cs" />
     <Compile Include="Thread.cs" />
     <Compile Include="Utility.cs" />
+    <Compile Include="WallpaperManager.cs" />
     <Page Include="Catalog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
