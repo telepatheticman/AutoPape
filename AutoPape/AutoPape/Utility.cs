@@ -17,6 +17,9 @@ namespace AutoPape
         thumbnail,
         fullImage
     }
+
+
+
     public static class Utility
     {
         public const string fullImagePath = "Full_Images";
