@@ -39,11 +39,43 @@ namespace AutoPape
         [XmlArrayAttribute("WhiteListedKeyWords")]
         [XmlArrayItem("KeyWord")]
         public List<string> keyWords;
+        [XmlIgnore]
+        public WallpaperManager wallpaperManager;
+        public SettingsManager(WallpaperManager wallpaperManager) : this()
+        {
+            this.wallpaperManager = wallpaperManager;
+
+        }
         public SettingsManager()
         {
             serializer = new XmlSerializer(this.GetType());
             blackList = new BlackList();
             keyWords = new List<string>();
+        }
+
+        public bool validThread(Thread check)
+        {
+            bool valid = false;
+
+            foreach (var keyword in keyWords)
+            {
+                if (check.sub.Contains(keyword) || check.teaser.Contains(keyword))
+                {
+                    valid = true;
+                    break;
+                }
+            }
+
+            foreach (var keyword in blackList.keyWords)
+            {
+                if (check.sub.Contains(keyword) || check.teaser.Contains(keyword))
+                {
+                    valid = false;
+                    break;
+                }
+            }
+
+            return valid;
         }
 
         public void saveSettings()

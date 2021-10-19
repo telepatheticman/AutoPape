@@ -25,8 +25,6 @@ namespace AutoPape
         [XmlAttribute]
         public string imagename { get; set; }
         [XmlIgnore]
-        public string extention { get; set; }
-        [XmlIgnore]
         public string imageurl { get; set; }
         [XmlIgnore]
         public string thumburl { get; set; }
@@ -34,38 +32,44 @@ namespace AutoPape
     public class Thread
     {
         [XmlIgnore]
-        string url;
+        public Image teaserThumb;
+        [XmlIgnore]
+        public string url;
         [XmlAttribute]
         public string board;
         [XmlAttribute]
         public string threadId;
-        public string subject;
+        [XmlElement("Subject")]
+        public string sub;
+        [XmlElement("Teaser")]
         public string teaser;
         [XmlIgnore]
         Regex rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/wg\/[0-9]+s?\.(?i)(jpg|png|jpeg)");
         [XmlIgnore]
         Regex rxNames = new Regex("[0-9]+");
         [XmlIgnore]
-        Regex rxExtention = new Regex("(jpg|png|jpeg)");
-        [XmlIgnore]
         HttpClient client = null;
         [XmlIgnore]
-        StackPanel threadPanel = null;
-
+        public StackPanel threadPanel = null;
+        [XmlArray("ThreadImages")]
         public List<threadImage> threadImages;
+        [XmlIgnore]
+        public bool fromDisk;
 
         public Thread()
         {
             board = "";
             threadId = "";
             url = "";
+            client = new HttpClient();
+            threadImages = new List<threadImage>();
         }
 
         public Thread(string board, string threadId, StackPanel stackPanel, string sub, string teaser)
         {
             this.threadId = threadId;
             this.board = board;
-            subject = sub;
+            this.sub = sub;
             this.teaser = teaser;
             url = $"https://boards.4chan.org/{board}/thread/{threadId}";
             threadPanel = stackPanel;
@@ -76,7 +80,8 @@ namespace AutoPape
 
         void buildThreadFromWeb()
         {
-            var task = client.GetStringAsync(url);
+            fromDisk = false;
+        var task = client.GetStringAsync(url);
             string result = task.GetAwaiter().GetResult();
             var images = rxImages.Matches(result);
             int image = 0;
@@ -87,7 +92,6 @@ namespace AutoPape
                 {
                     threadImages.Add(new threadImage());
                     threadImages.Last().imagename = rxNames.Match(match.Value.Substring(9)).Value;
-                    threadImages.Last().extention = rxExtention.Match(match.Value).Value;
                     image++;
                     continue;
                 }
@@ -120,13 +124,51 @@ namespace AutoPape
                 });
                 
             }
-            saveThread();
+            //saveThread();
         }
 
         public async void buildThreadFromWebAsync()
         {
             await Task.Run(() => buildThreadFromWeb()); ;
         }
+
+        public void buildThreadFromDisk(string board, string thread)
+        {
+            fromDisk = true;
+            XmlSerializer xmlSerializer = new XmlSerializer(this.GetType());
+            FileStream stream = new FileStream(
+                Path.Combine(
+                    Utility.pathToThreadDirectory(board, thread), $"{thread}.xml"),
+                FileMode.Open);
+            Thread toLoad = (Thread)xmlSerializer.Deserialize(stream);
+            stream.Close();
+            buildThreadFromDisk(toLoad);
+        }
+
+        private void buildThreadFromDisk(Thread from)
+        {
+            this.board = from.board;
+            this.threadId = from.threadId;
+            this.sub = from.sub;
+            this.teaser = from.teaser;
+            this.threadImages = from.threadImages;
+            int i = 0;
+            foreach(var threadImage in this.threadImages)
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                {
+                    threadImage.thumb = new Image();
+                    threadImage.thumb.Source = new BitmapImage(new Uri(Utility.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail)));
+                    if(i == 0)
+                    {
+                        teaserThumb = threadImage.thumb;
+                        i++;
+                    }
+                    threadImage.imageurl = Utility.pathToImage(board, threadId, threadImage.imagename, imageType.fullImage);
+                });
+            }
+        }
+
 
         public void saveThread()
         {

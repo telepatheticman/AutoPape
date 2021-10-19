@@ -38,6 +38,13 @@ namespace AutoPape
             return clean;
         }
 
+        public static string pathToImage(string board, string thread, string image, imageType type)
+        {
+            string path = pathToImageDirectory(board, thread, type);
+            path = Path.Combine(path, image + ".png");
+            return path;
+        }
+
         public static string pathToImageDirectory(string board, string thread, imageType type)
         {
             string path = pathToThreadDirectory(board, thread);
@@ -117,39 +124,6 @@ namespace AutoPape
                 image.Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(path));
             });
             return image;
-        }
-
-        public static void test()
-        {
-            int i;
-            Screen[] zScreen = Screen.AllScreens;
-            string csScreens = "";
-
-            for (i = 0; i < zScreen.Length; i++)
-            {
-                // For each screen, add the screen properties to a list box.
-
-                csScreens += "Device Name: " + zScreen[i].DeviceName + "\r\n";
-                Rectangle Rectangle_Screen = zScreen[i].Bounds;
-                csScreens += String.Format
-                (
-                  "  Bounds: {0}\r\n" +
-                  "  Width: {0}\r\n" +
-                  "  Height: {0}\r\n" +
-                  "",
-                  zScreen[i].Bounds.ToString(),
-                  zScreen[i].Bounds.Left.ToString(),
-                  zScreen[i].Bounds.Top.ToString(),
-                  zScreen[i].Bounds.Width.ToString(),
-                  zScreen[i].Bounds.Height.ToString()
-                );
-                csScreens += "Type: " + zScreen[i].GetType().ToString() + "\r\n";
-                csScreens += "Working Area: " + zScreen[i].WorkingArea.ToString() + "\r\n";
-                csScreens += "Primary Screen: " + zScreen[i].Primary.ToString() + "\r\n";
-
-                
-            }
-            Console.WriteLine(csScreens);
         }
     }
 }

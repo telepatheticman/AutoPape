@@ -13,12 +13,12 @@ using Image = System.Windows.Controls.Image;
 using System.Windows;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using Timer = System.Windows.Forms.Timer;
 
-namespace Catalog
+namespace AutoPape
 {
     public class CatalogThread
     {
-        public Image threadImage;
         public string imgurl { get; set; } = "deleted";
         public string sub { get; set; }
         public string teaser { get; set; }
@@ -30,32 +30,78 @@ namespace Catalog
         string url;
         Regex rxFullJson = new Regex("\\{\\\"threads\\\".*?\\};");
         Regex rxThreads = new Regex("\\\"[0-9]*\\\":.*?},.*?\\},");
-        public List<CatalogThread> catalogThreads;
+        public List<Thread> threads;
         public StackPanel threadImages = null;
         WrapPanel wrapPanel = null;
         //List<System.Windows.Controls.StackPanel> 
         HttpClient client;
         AutoPape.Thread threadInfo = null;
-        int numThreads { get { return catalogThreads.Count; } }
+        int numThreads { get { return threads.Count; } }
+
+        SettingsManager manager;
 
         public Catalog()
         {
             
             this.board = "wg";
             url = $"https://boards.4chan.org/{board}/catalog";
-            catalogThreads = new List<CatalogThread>();
+            threads = new List<Thread>();
             client = new HttpClient();
             //buildCatalogInfoAsync();
 
         }
-        public Catalog(string board, WrapPanel wrapPanel, StackPanel stackPanel)
+        public Catalog(string board, WrapPanel wrapPanel, StackPanel stackPanel, SettingsManager manager)
         {
             this.board = board;
             this.wrapPanel = wrapPanel;
             this.threadImages = stackPanel;
             url = $"https://boards.4chan.org/{board}/catalog";
-            catalogThreads = new List<CatalogThread>();
+            threads = new List<Thread>();
             client = new HttpClient();
+
+            this.manager = manager;
+        }
+
+        public void buildFromDisk()
+        {
+            System.IO.DirectoryInfo info = new DirectoryInfo(Utility.pathToBoardDirectory(board));
+            foreach(var directory in info.GetDirectories())
+            {
+                threads.Add(new Thread());
+                threads.Last().buildThreadFromDisk(board, directory.Name);
+                threads.Last().threadPanel = threadImages;
+                System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                {
+
+
+
+                    Button Item = new Button();
+                    StackPanel content = new StackPanel();
+                    content.VerticalAlignment = VerticalAlignment.Top;
+                    Item.VerticalContentAlignment = VerticalAlignment.Top;
+                    Item.Content = content;
+                    Item.Width = 200;
+                    Item.Height = Double.NaN;
+                    Item.Margin = new Thickness(10);
+                    string s = threads.Last().threadId;
+                    string subject = threads.Last().sub;
+                    string tease = threads.Last().teaser;
+                    Item.Click += (o, e) => setThread(threads.Last());
+
+                    content.Children.Add(threads.Last().teaserThumb);
+
+                    TextBlock block = new TextBlock();
+                    block.TextWrapping = TextWrapping.Wrap;
+
+                    block.Text = subject.Length > 200 ? subject.Substring(0, 200) + "..." : subject;
+                    block.Text += "\n";
+                    block.Text += tease.Length > 500 ? tease.Substring(0, 500) + "..." : tease;
+                    content.Children.Add(block);
+                    wrapPanel.Children.Add(Item);
+
+                });
+            }
+            
         }
 
         void buildCatalogInfo()
@@ -69,18 +115,20 @@ namespace Catalog
             foreach (Match thread in Threads)
             {
                 string threadSanitized = thread.Value.Substring(thread.Value.IndexOf(':') + 1).TrimEnd(',', '}') + "}";
-                catalogThreads.Add(JsonSerializer.Deserialize<CatalogThread>(threadSanitized));
+                CatalogThread catalogThread = JsonSerializer.Deserialize<CatalogThread>(threadSanitized);
+                catalogThread.threadId = thread.Value.Split(':').First().Trim('\"');
+                threads.Add(new Thread(board, catalogThread.threadId, threadImages, catalogThread.sub, catalogThread.teaser));
                 
-                catalogThreads.Last().sub = AutoPape.Utility.cleanHTMLString(catalogThreads.Last().sub);
+                threads.Last().sub = Utility.cleanHTMLString(threads.Last().sub);
 
-                catalogThreads.Last().teaser = AutoPape.Utility.cleanHTMLString(catalogThreads.Last().teaser);
+                threads.Last().teaser = Utility.cleanHTMLString(threads.Last().teaser);
 
-                catalogThreads.Last().threadId = thread.Value.Split(':').First().Trim('\"');
-                catalogThreads.Last().threadImage =
-                    AutoPape.Utility.imageFromURL(
-                        $"https://i.4cdn.org/{board}/{catalogThreads.Last().imgurl}s.jpg",
+                threads.Last().threadId = thread.Value.Split(':').First().Trim('\"');
+                threads.Last().teaserThumb =
+                    Utility.imageFromURL(
+                        $"https://i.4cdn.org/{board}/{catalogThread.imgurl}s.jpg",
                         client,
-                        catalogThreads.Last().imgurl == "deleted");
+                        catalogThread.imgurl == "deleted");
 
                 System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                 {
@@ -95,12 +143,12 @@ namespace Catalog
                     Item.Width = 200;
                     Item.Height = Double.NaN;
                     Item.Margin = new Thickness(10);
-                    string s = catalogThreads.Last().threadId;
-                    string subject = catalogThreads.Last().sub;
-                    string tease = catalogThreads.Last().teaser;
-                    Item.Click += (o, e) => setThread(s, subject, tease);
+                    string s = threads.Last().threadId;
+                    string subject = threads.Last().sub;
+                    string tease = threads.Last().teaser;
+                    Item.Click += (o, e) => setThread(threads.Last());
 
-                    content.Children.Add(catalogThreads.Last().threadImage);
+                    content.Children.Add(threads.Last().teaserThumb);
 
                     TextBlock block = new TextBlock();
                     block.TextWrapping = TextWrapping.Wrap;
@@ -112,20 +160,45 @@ namespace Catalog
                     wrapPanel.Children.Add(Item);
                     
                 });
+                
             }
+            buildFromDisk();
         }
 
-        public async void buildCatalogInfoAsync()
+        public async void buildCatalogInfoAsync(Timer timer)
         {
-            await Task.Run(() => buildCatalogInfo()); ;
+            await Task.Run(() => buildCatalogInfo());
+            timer.Start();
         }
 
-        private void setThread(string threadID, string sub, string teaser)
+        private void setThread(Thread thread)
         {
-            threadInfo = new AutoPape.Thread(board, threadID, threadImages, sub, teaser);
-            threadInfo.clearChildren();
-            threadInfo.buildThreadFromWebAsync();
+            thread.clearChildren();
+            thread.buildThreadFromWebAsync();
             //threadInfo.saveThread();
         }
+
+        public void setWallpaper()
+        {
+            foreach(var monitor in manager.wallpaperManager.monitorSettings)
+            {
+                List<string> validImages = new List<string>();
+                foreach(var thread in threads)
+                {
+                    if(thread.fromDisk)
+                    {
+                        foreach(var url in thread.threadImages)
+                        {
+                            validImages.Add(url.imageurl);
+                        }
+                    }
+                }
+                Random rand = new Random();
+                string image = validImages.ElementAt(rand.Next(0, validImages.Count() - 1));
+                monitor.Image = System.Drawing.Image.FromFile(image);
+            }
+            manager.wallpaperManager.buildWallpaper();
+        }
+        
     }
 }
