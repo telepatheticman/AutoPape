@@ -125,5 +125,34 @@ namespace AutoPape
             });
             return image;
         }
+
+        public static long msToNextHour()
+        {
+            long ms = 0;
+
+            string now = DateTime.Now.ToString("HH:mm:ss", System.Globalization.DateTimeFormatInfo.InvariantInfo);
+            int nextHourInt = int.Parse(now.Split(':').First()) + 1;
+            nextHourInt = nextHourInt == 24 ? 0 : nextHourInt;
+            string nextHour = $"{nextHourInt}:00:00";
+            var nowDT = DateTime.Parse(now);
+            var nextHourDT = DateTime.Parse(nextHour);
+            ms = (long)nextHourDT.Subtract(nowDT).TotalMilliseconds;
+            ms = ms < 0 ? 86400000 - Math.Abs(ms) : ms;
+
+            return ms;
+        }
+
+        public static long msFromNowToTime(string nextTime)
+        {
+            long ms = 0;
+
+            string now = DateTime.Now.ToString("HH:mm:ss", System.Globalization.DateTimeFormatInfo.InvariantInfo);
+            var nowDT = DateTime.Parse(now);
+            var nextHourDT = DateTime.Parse(nextTime);
+            ms = (long)nextHourDT.Subtract(nowDT).TotalMilliseconds;
+            ms = ms < 0 ? 86400000 - Math.Abs(ms) : ms;
+
+            return ms;
+        }
     }
 }

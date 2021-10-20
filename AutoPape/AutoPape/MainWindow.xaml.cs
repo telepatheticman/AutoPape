@@ -51,7 +51,7 @@ namespace AutoPape
             catalog = new Catalog("wg", catalogPanel, threadPanel, manager);
             catalog.buildCatalogInfoAsync(setWallpaper);
 
-            
+            Console.WriteLine(Utility.msToNextHour());
         }
 
         public void setWallpaperTick(object sender, EventArgs eventArgs)
