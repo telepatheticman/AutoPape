@@ -8,36 +8,68 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Serialization;
 
 namespace AutoPape
 {
     public enum fit
     {
-        center,
-        stretch,
-        fit,
-        fill
+        Center,
+        Stretch,
+        Fit,
+        Fill
     }
 
     public class MonitorSetting
     {
-        public int x;
-        public int y;
-        public int height;
-        public int width;
-        public fit fitOption;
+        [XmlAttribute("MonitorName")]
+        public string name = "monitor";
+        [XmlAttribute("IsPrimary")]
+        public bool primary = false;
+        public bool allowOpposite = false;
+        public bool allowNarrower = false;
+        public bool allowWider = false;
+        [XmlIgnore]
+        public int x = 0;
+        [XmlIgnore]
+        public int y = 0;
+        [XmlIgnore]
+        public int height = 100;
+        [XmlIgnore]
+        public int width = 200;
+        public int minimumResolution = 1080;
+        public fit fitOption = fit.Center;
+        public fit narrowOption = fit.Fill;
+        public fit wideOption = fit.Fill;
+        [XmlIgnore]
+        public orientation orientation
+        {
+            get
+            {
+                return width > height ? orientation.horizontal : orientation.vertical;
+            }
+        }
+        [XmlIgnore]
         public Image Image;
+        public override string ToString()
+        {
+            return name + (primary ? "(Primary)" : "") ;
+        }
     }
 
 
 
     public class WallpaperManager
     {
+        [XmlIgnore]
         public int height;
+        [XmlIgnore]
         public int width;
+        [XmlIgnore]
         public int xOffset;
+        [XmlIgnore]
         public int yOffset;
-
+        [XmlIgnore]
         public int papers
         {
             get
@@ -45,17 +77,18 @@ namespace AutoPape
                 return monitorSettings.Count();
             }
         }
-
+        [XmlArrayAttribute("MonitorSettings")]
+        [XmlArrayItem("Monitor")]
         public List<MonitorSetting> monitorSettings;
-
+        [XmlIgnore]
         public Bitmap wallpaper;
+        [XmlIgnore]
         private string wallPaperName = "CurrentPaper\\current.bmp";
 
         public WallpaperManager()
         {
-            monitorSettings = new List<MonitorSetting>();
-            getScreenSpace();
-            wallpaper = new Bitmap(width, height);
+            //monitorSettings = new List<MonitorSetting>();
+            //getScreenSpace();
         }
 
         public void buildWallpaper()
@@ -85,7 +118,6 @@ namespace AutoPape
         public void getScreenSpace()
         {
             Screen[] zScreen = Screen.AllScreens;
-            string csScreens = "";
 
             int xMin = 0;
             int yMin = 0;
@@ -109,6 +141,8 @@ namespace AutoPape
                     y = zScreen[i].Bounds.Top,
                     width = zScreen[i].Bounds.Width,
                     height = zScreen[i].Bounds.Height,
+                    name = zScreen[i].DeviceName,
+                    primary = zScreen[i].Primary
                 });
 
             }
@@ -117,11 +151,62 @@ namespace AutoPape
             height = yMax - yMin;
             xOffset = Math.Abs(xMin);
             yOffset = Math.Abs(yMin);
+        }
 
+        public void refreshScreens()
+        {
+            if (monitorSettings == null)
+            {
+                monitorSettings = new List<MonitorSetting>();
+                getScreenSpace();
+                return;
+            }
+            Screen[] Screens = Screen.AllScreens;
 
+            int xMin = 0;
+            int yMin = 0;
+            int xMax = 0;
+            int yMax = 0;
 
-            //Console.WriteLine(csScreens);
-            //Console.WriteLine($"Width {width}, Height {hight}, xOffset {xOffset}, yOffset {yOffset}");
+            for(int i = 0; i < Screens.Length; i++)
+            {
+                xMin = Math.Min(xMin, Screens[i].Bounds.Left);
+                yMin = Math.Min(yMin, Screens[i].Bounds.Top);
+
+                xMax = Math.Max(xMax, Screens[i].Bounds.Left + Screens[i].Bounds.Width);
+                yMax = Math.Max(yMax, Screens[i].Bounds.Top + Screens[i].Bounds.Height);
+                bool refreshed = false;
+                foreach(var setting in monitorSettings)
+                {
+                    if(setting.name == Screens[i].DeviceName)
+                    {
+                        setting.x = Screens[i].Bounds.Left;
+                        setting.y = Screens[i].Bounds.Top;
+                        setting.width = Screens[i].Bounds.Width;
+                        setting.height = Screens[i].Bounds.Height;
+                        setting.name = Screens[i].DeviceName;
+                        setting.primary = Screens[i].Primary;
+                        refreshed = true;
+                    }
+                }
+                if(!refreshed)
+                {
+                    monitorSettings.Add(new MonitorSetting()
+                    {
+                        x = Screens[i].Bounds.Left,
+                        y = Screens[i].Bounds.Top,
+                        width = Screens[i].Bounds.Width,
+                        height = Screens[i].Bounds.Height,
+                        name = Screens[i].DeviceName,
+                        primary = Screens[i].Primary
+                    });
+                }
+            }
+
+            width = xMax - xMin;
+            height = yMax - yMin;
+            xOffset = Math.Abs(xMin);
+            yOffset = Math.Abs(yMin);
         }
 
         private void buildCentered(MonitorSetting monitor)

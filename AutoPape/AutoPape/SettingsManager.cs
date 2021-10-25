@@ -4,10 +4,24 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 using System.Xml.Serialization;
 
 namespace AutoPape
 {
+    enum archiveMode
+    {
+        everything,
+        whitelist,
+        current,
+        none
+    }
+
+    enum threadSaveMode
+    {
+        everything,
+        fit
+    }
 
     public class BlackList
     {
@@ -39,7 +53,7 @@ namespace AutoPape
         [XmlArrayAttribute("WhiteListedKeyWords")]
         [XmlArrayItem("KeyWord")]
         public List<string> keyWords;
-        [XmlIgnore]
+        [XmlElement("Monitors")]
         public WallpaperManager wallpaperManager;
         public SettingsManager(WallpaperManager wallpaperManager) : this()
         {
@@ -51,7 +65,10 @@ namespace AutoPape
             serializer = new XmlSerializer(this.GetType());
             blackList = new BlackList();
             keyWords = new List<string>();
+            wallpaperManager = new WallpaperManager();
         }
+
+
 
         public bool validThread(Thread check)
         {
@@ -86,13 +103,24 @@ namespace AutoPape
             serializer.Serialize(stream, this);
         }
 
-        public void loadSettings()
+        public bool loadSettings()
         {
             FileStream stream = new FileStream(
                 Path.Combine(Utility.pathToParent(), "Settings.xml"),
                 FileMode.Open);
-            SettingsManager loaded = (SettingsManager)serializer.Deserialize(stream);
+            SettingsManager loaded;
+            try
+            {
+                loaded = (SettingsManager)serializer.Deserialize(stream);
+                loaded.wallpaperManager.refreshScreens();
+            }
+            catch(Exception ex)
+            {
+                wallpaperManager.getScreenSpace();
+                return false;
+            }
             copyFromLoaded(loaded);
+            return true;
         }
 
         private void copyFromLoaded(SettingsManager loaded)
@@ -100,6 +128,7 @@ namespace AutoPape
             serializer = loaded.serializer;
             blackList = loaded.blackList;
             keyWords = loaded.keyWords;
+            wallpaperManager = loaded.wallpaperManager;
         }
     }
 }

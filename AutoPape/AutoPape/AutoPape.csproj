@@ -87,17 +87,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Catalog.xaml.cs">
-      <DependentUpon>Catalog.xaml</DependentUpon>
-    </Compile>
     <Compile Include="SettingsManager.cs" />
     <Compile Include="Thread.cs" />
     <Compile Include="Utility.cs" />
     <Compile Include="WallpaperManager.cs" />
-    <Page Include="Catalog.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

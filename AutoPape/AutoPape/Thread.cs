@@ -16,6 +16,26 @@ using System.Xml.Serialization;
 
 namespace AutoPape
 {
+    public enum orientation
+    {
+        vertical,
+        horizontal
+    }
+    public class imageInfo
+    {
+        public int width = 1;
+
+        public int height = 1;
+
+        public orientation orientation
+        {
+            get
+            {
+                return width > height ? orientation.horizontal : orientation.vertical;
+            }
+        }
+    }
+
     public class threadImage
     {
         [XmlIgnore]
@@ -81,7 +101,7 @@ namespace AutoPape
         void buildThreadFromWeb()
         {
             fromDisk = false;
-        var task = client.GetStringAsync(url);
+            var task = client.GetStringAsync(url);
             string result = task.GetAwaiter().GetResult();
             var images = rxImages.Matches(result);
             int image = 0;
