@@ -28,6 +28,7 @@ namespace AutoPape
     {
         string board;
         string url;
+        string urlArchive;
         Regex rxFullJson = new Regex("\\{\\\"threads\\\".*?\\};");
         Regex rxThreads = new Regex("\\\"[0-9]*\\\":.*?},.*?\\},");
         public List<Thread> threads;
@@ -45,6 +46,7 @@ namespace AutoPape
             
             this.board = "wg";
             url = $"https://boards.4chan.org/{board}/catalog";
+            urlArchive = $"";
             threads = new List<Thread>();
             client = new HttpClient();
             //buildCatalogInfoAsync();
