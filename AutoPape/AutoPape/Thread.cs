@@ -3,30 +3,37 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
-using BitmapImage = System.Windows.Media.Imaging.BitmapImage;
-using PngBitmapEncoder = System.Windows.Media.Imaging.PngBitmapEncoder;
 using System.Xml;
 using System.Xml.Serialization;
+using BitmapImage = System.Windows.Media.Imaging.BitmapImage;
+using PngBitmapEncoder = System.Windows.Media.Imaging.PngBitmapEncoder;
 
 namespace AutoPape
 {
     public enum orientation
     {
+        [XmlEnum("Vertical")]
         vertical,
+        [XmlEnum("Horizontal")]
         horizontal
     }
-    public class imageInfo
+
+    public class threadImage
     {
+        //public imageInfo ImageInfo
+
+        [XmlAttribute("Name")]
+        public string imagename { get; set; }
+        [XmlAttribute("Width")]
         public int width = 1;
-
+        [XmlAttribute("Height")]
         public int height = 1;
-
+        [XmlAttribute("Orientation")]
         public orientation orientation
         {
             get
@@ -34,16 +41,7 @@ namespace AutoPape
                 return width > height ? orientation.horizontal : orientation.vertical;
             }
         }
-    }
 
-    public class threadImage
-    {
-        [XmlIgnore]
-        public Image thumb;
-        [XmlIgnore]
-        public Image full;
-        [XmlAttribute]
-        public string imagename { get; set; }
         [XmlIgnore]
         public string imageurl { get; set; }
         [XmlIgnore]
@@ -98,52 +96,65 @@ namespace AutoPape
             rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/"+board+@"\/[0-9]+s?\.(?i)(jpg|png|jpeg)");
         }
 
+        void buildThreadImageInfo()
+        {
+            foreach (var image in threadImages)
+            {
+                Image full =
+                    Utility.imageFromURL(
+                        "https://" + image.imageurl,
+                        client,
+                        image.imageurl == null);
+
+                image.width = (int)full.Width;
+                image.height = (int)full.Height;
+
+            }
+        }
+
+        public async void buildThreadImageInfoAsync()
+        {
+            await Task.Run(() => buildThreadImageInfo()); ;
+        }
+
         void buildThreadFromWeb()
         {
             fromDisk = false;
             var task = client.GetStringAsync(url);
             string result = task.GetAwaiter().GetResult();
             var images = rxImages.Matches(result);
-            int image = 0;
+            int imageNum = 0;
 
             foreach (Match match in images)
             {
-                if (image == 0)
+                if (imageNum == 0)
                 {
                     threadImages.Add(new threadImage());
                     threadImages.Last().imagename = rxNames.Match(match.Value.Substring(9)).Value;
-                    image++;
+                    imageNum++;
                     continue;
                 }
-                else if (image == 1)
+                else if (imageNum == 1)
                 {
-                    image++;
+                    imageNum++;
                     threadImages.Last().imageurl = match.Value;
                 }
-                else if (image == 2)
+                else if (imageNum == 2)
                 {
-                    image = 0;
+                    imageNum = 0;
                     threadImages.Last().thumburl = match.Value;
                 }
             }
 
-            foreach(var thread in threadImages)
+            /*foreach(var image in threadImages)
             {
 
-                thread.thumb = 
+                Image thumb = 
                     Utility.imageFromURL(
-                        "https://" + thread.thumburl, 
+                        "https://" + image.thumburl, 
                         client, 
-                        thread.thumburl == null);
-
-
-                System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
-                {
-                    threadPanel.Children.Add(thread.thumb);
-                    thread.thumb.Margin = new Thickness(10);
-                });
-                
-            }
+                        image.thumburl == null);
+            }*/
             //saveThread();
         }
 
@@ -177,11 +188,11 @@ namespace AutoPape
             {
                 System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                 {
-                    threadImage.thumb = new Image();
-                    threadImage.thumb.Source = new BitmapImage(new Uri(Utility.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail)));
+                    Image thumb = new Image();
                     if(i == 0)
                     {
-                        teaserThumb = threadImage.thumb;
+                        thumb.Source = new BitmapImage(new Uri(Utility.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail)));
+                        teaserThumb = thumb;
                         i++;
                     }
                     threadImage.imageurl = Utility.pathToImage(board, threadId, threadImage.imagename, imageType.fullImage);
@@ -189,6 +200,39 @@ namespace AutoPape
             }
         }
 
+        public void setThreadContent(List<Image> thumbs)
+        {
+            for(int i = 0; i < threadImages.Count(); i++)
+            {
+                if (fromDisk)
+                {
+                    thumbs[i].Source = new BitmapImage(new Uri(Utility.pathToImage(board, threadId, threadImages[i].imagename, imageType.thumbnail)));
+                }
+                else
+                {
+                    thumbs[i] =
+                    Utility.imageFromURL(
+                    "https://" + threadImages[i].thumburl,
+                    client,
+                    threadImages[i].thumburl == null);
+                }
+                System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                {
+                    threadPanel.Children.Add(thumbs[i]);
+                    thumbs[i].Margin = new Thickness(10);
+                });
+            }
+        }
+
+        public async void setThreadContentAsync()
+        {
+            List<Image> thumbs = new List<Image>();
+            foreach(var threadImage in this.threadImages)
+            {
+                thumbs.Add(new Image());
+            }
+            await Task.Run(() => setThreadContent(thumbs));
+        }
 
         public void saveThread()
         {
@@ -207,10 +251,12 @@ namespace AutoPape
                         client,
                         thread.imageurl == null);
                     saveImage(fullDirectory, thread.imagename, toSave);
-                }
-                if(thread.thumb != null)
-                {
-                    saveImage(thumbDirecotry, thread.imagename, thread.thumb);
+                    Image thumbToSave =
+                    Utility.imageFromURL(
+                        "https://" + thread.thumburl,
+                        client,
+                        thread.thumburl == null);
+                    saveImage(thumbDirecotry, thread.imagename, thumbToSave);
                 }
             }
 

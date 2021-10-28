@@ -84,7 +84,7 @@ namespace AutoPape
 
             setWallpaper = new Timer();
             setWallpaper.Enabled = false;
-            setWallpaper.Interval = 5000;
+            setWallpaper.Interval = 500000;
             setWallpaper.Tick += new EventHandler(setWallpaperTick);
 
             MonitorBox.SelectionChanged += 

@@ -88,7 +88,8 @@ namespace AutoPape
                     string s = threads.Last().threadId;
                     string subject = threads.Last().sub;
                     string tease = threads.Last().teaser;
-                    Item.Click += (o, e) => setThread(threads.Last());
+                    var currentThread = threads.Last();
+                    Item.Click += (o, e) => setThread(currentThread);
 
                     content.Children.Add(threads.Last().teaserThumb);
 
@@ -149,6 +150,7 @@ namespace AutoPape
                     string subject = threads.Last().sub;
                     string tease = threads.Last().teaser;
                     var currentThread = threads.Last();
+                    currentThread.buildThreadFromWebAsync();
                     Item.Click += (o, e) => setThread(currentThread);
 
                     content.Children.Add(threads.Last().teaserThumb);
@@ -177,7 +179,7 @@ namespace AutoPape
         private void setThread(Thread thread)
         {
             thread.clearChildren();
-            thread.buildThreadFromWebAsync();
+            thread.setThreadContentAsync();
             //threadInfo.saveThread();
         }
 
