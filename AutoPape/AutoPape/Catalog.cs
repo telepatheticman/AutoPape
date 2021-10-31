@@ -32,6 +32,7 @@ namespace AutoPape
         Regex rxFullJson = new Regex("\\{\\\"threads\\\".*?\\};");
         Regex rxThreads = new Regex("\\\"[0-9]*\\\":.*?},.*?\\},");
         public List<Thread> threads;
+        public Thread activeThread;
         public StackPanel threadImages = null;
         WrapPanel wrapPanel = null;
         //List<System.Windows.Controls.StackPanel> 
@@ -167,7 +168,7 @@ namespace AutoPape
                 });
                 
             }
-            buildFromDisk();
+            //buildFromDisk();
         }
 
         public async void buildCatalogInfoAsync(Timer timer)
@@ -178,6 +179,7 @@ namespace AutoPape
 
         private void setThread(Thread thread)
         {
+            activeThread = thread;
             thread.clearChildren();
             thread.setThreadContentAsync();
             //threadInfo.saveThread();

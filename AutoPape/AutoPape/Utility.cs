@@ -126,6 +126,16 @@ namespace AutoPape
             return image;
         }
 
+        public static string imageExtention(string url)
+        {
+            string extention = "none";
+
+            var items = url.Split('.');
+            if (items.Count() > 1) extention = items.Last();
+
+            return extention;
+        }
+
         public static long msToNextHour()
         {
             long ms = 0;

@@ -93,8 +93,18 @@ namespace AutoPape
                     setMonitorSettingInfo((MonitorSetting)MonitorBox.SelectedItem);
                 };
 
+            BlackListAdd.Click +=
+                (o, e) =>
+                {
+                    addBlackListItem(manager, BlackListText.Text);
+                };
+
             manager = new SettingsManager();
             manager.loadSettings();
+            foreach(var item in manager.blackList.keyWords)
+            {
+                addBlackListItem(manager, item, true);
+            }
             foreach(var monitor in manager.wallpaperManager.monitorSettings)
             {
                 MonitorBox.Items.Add(monitor);
@@ -105,14 +115,56 @@ namespace AutoPape
                 }
             }
 
+            SaveButton.Click += (o, e) =>
+            {
+                saveClicked();
+            };
 
             catalog = new Catalog("wg", catalogPanel, threadPanel, manager);
             catalog.buildCatalogInfoAsync(setWallpaper);
         }
 
+        public void saveClicked()
+        {
+            catalog.activeThread.saveThreadAsync();
+        }
+
+        public void addBlackListItem(SettingsManager settings, string toAdd, bool fromList = false)
+        {
+            if ((!settings.blackList.keyWords.Contains(toAdd) || fromList) && !string.IsNullOrEmpty(toAdd))
+            {
+                //TODO: Fix this garbage
+                if (!fromList) settings.blackList.keyWords.Add(toAdd);
+
+                StackPanel item = new StackPanel();
+                item.Orientation = System.Windows.Controls.Orientation.Horizontal;
+                item.Margin = new Thickness(10);
+                TextBlock itemText = new TextBlock();
+                itemText.Text = toAdd;
+                System.Windows.Controls.Button itemButton = new System.Windows.Controls.Button();
+                itemButton.Content = "X";
+                itemButton.Width = 10;
+                itemButton.Height = 10;
+                itemButton.Click += (o, e) =>
+                {
+                    removeBlackListItem(settings, toAdd, item);
+                };
+                item.Children.Add(itemText);
+                item.Children.Add(itemButton);
+                BlackList.Children.Add(item);
+                BlackListText.Text = "";
+            }
+        }
+
+        public void removeBlackListItem(SettingsManager settings, string toRemove, StackPanel panelRemove)
+        {
+            settings.blackList.keyWords.Remove(toRemove);
+            BlackList.Children.Remove(panelRemove);
+        }
+
         public void setWallpaperTick(object sender, EventArgs eventArgs)
         {
-            catalog.setWallpaper();
+            //catalog.setWallpaper();
         }
 
     }

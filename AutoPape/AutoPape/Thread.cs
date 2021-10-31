@@ -62,7 +62,9 @@ namespace AutoPape
         [XmlElement("Teaser")]
         public string teaser;
         [XmlIgnore]
-        Regex rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/wg\/[0-9]+s?\.(?i)(jpg|png|jpeg)");
+        Regex rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/wg\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
+        [XmlIgnore]
+        string extentions = "jpg|png|jpeg";
         [XmlIgnore]
         Regex rxNames = new Regex("[0-9]+");
         [XmlIgnore]
@@ -93,7 +95,7 @@ namespace AutoPape
             threadPanel = stackPanel;
             threadImages = new List<threadImage>();
             client = new HttpClient();
-            rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/"+board+@"\/[0-9]+s?\.(?i)(jpg|png|jpeg)");
+            rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/"+board+ @"\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
         }
 
         void buildThreadImageInfo()
@@ -124,38 +126,39 @@ namespace AutoPape
             string result = task.GetAwaiter().GetResult();
             var images = rxImages.Matches(result);
             int imageNum = 0;
+            bool skipped = false;
 
             foreach (Match match in images)
             {
                 if (imageNum == 0)
                 {
+                    imageNum++;
+                    if(!extentions.Contains(Utility.imageExtention(match.Value)))
+                    {
+                        skipped = true;
+                        continue;
+                    }
                     threadImages.Add(new threadImage());
                     threadImages.Last().imagename = rxNames.Match(match.Value.Substring(9)).Value;
-                    imageNum++;
                     continue;
                 }
                 else if (imageNum == 1)
                 {
                     imageNum++;
+                    if (skipped) continue;
                     threadImages.Last().imageurl = match.Value;
                 }
                 else if (imageNum == 2)
                 {
                     imageNum = 0;
+                    if(skipped)
+                    {
+                        skipped = false;
+                        continue;
+                    }
                     threadImages.Last().thumburl = match.Value;
                 }
             }
-
-            /*foreach(var image in threadImages)
-            {
-
-                Image thumb = 
-                    Utility.imageFromURL(
-                        "https://" + image.thumburl, 
-                        client, 
-                        image.thumburl == null);
-            }*/
-            //saveThread();
         }
 
         public async void buildThreadFromWebAsync()
@@ -172,6 +175,7 @@ namespace AutoPape
                     Utility.pathToThreadDirectory(board, thread), $"{thread}.xml"),
                 FileMode.Open);
             Thread toLoad = (Thread)xmlSerializer.Deserialize(stream);
+            stream.Flush();
             stream.Close();
             buildThreadFromDisk(toLoad);
         }
@@ -206,7 +210,10 @@ namespace AutoPape
             {
                 if (fromDisk)
                 {
-                    thumbs[i].Source = new BitmapImage(new Uri(Utility.pathToImage(board, threadId, threadImages[i].imagename, imageType.thumbnail)));
+                    System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                    {
+                        thumbs[i].Source = new BitmapImage(new Uri(Utility.pathToImage(board, threadId, threadImages[i].imagename, imageType.thumbnail)));
+                    });
                 }
                 else
                 {
@@ -250,6 +257,11 @@ namespace AutoPape
                         "https://" + thread.imageurl,
                         client,
                         thread.imageurl == null);
+                    System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                    {
+                        thread.width = ((BitmapImage)toSave.Source).PixelWidth;
+                        thread.height = ((BitmapImage)toSave.Source).PixelHeight;
+                    });
                     saveImage(fullDirectory, thread.imagename, toSave);
                     Image thumbToSave =
                     Utility.imageFromURL(
@@ -271,6 +283,11 @@ namespace AutoPape
             xmlSerializer.Serialize(stream, this);
         }
 
+        public async void saveThreadAsync()
+        {
+            await Task.Run(() => saveThread()); ;
+        }
+
         public void saveImage(string path, string name, Image toSave)
         {
             BitmapImage imageBitmap = new BitmapImage();
@@ -278,6 +295,9 @@ namespace AutoPape
             {
                 imageBitmap = ((BitmapImage)toSave.Source);
                 PngBitmapEncoder encoder = new PngBitmapEncoder();
+                //Issue saving thread when already loaded from disk
+                //Short term: Dont load from disk? Yes.
+                //Long term: Load from disk seperate from loading from web? Likely
                 FileStream stream = new FileStream(Path.Combine(path, name + ".png"), FileMode.Create);
                 encoder.Interlace = PngInterlaceOption.On;
                 encoder.Frames.Add(BitmapFrame.Create(imageBitmap));

@@ -105,18 +105,19 @@ namespace AutoPape
 
         public bool loadSettings()
         {
-            FileStream stream = new FileStream(
-                Path.Combine(Utility.pathToParent(), "Settings.xml"),
-                FileMode.Open);
             SettingsManager loaded;
             try
             {
+                FileStream stream = new FileStream(
+                    Path.Combine(Utility.pathToParent(), "Settings.xml"),
+                    FileMode.Open);
                 loaded = (SettingsManager)serializer.Deserialize(stream);
                 loaded.wallpaperManager.refreshScreens();
             }
             catch(Exception ex)
             {
-                wallpaperManager.getScreenSpace();
+                buildDefaults();
+                saveSettings();
                 return false;
             }
             copyFromLoaded(loaded);
@@ -129,6 +130,18 @@ namespace AutoPape
             blackList = loaded.blackList;
             keyWords = loaded.keyWords;
             wallpaperManager = loaded.wallpaperManager;
+        }
+
+        private void buildDefaults()
+        {
+            blackList.keyWords.Add("NSFW");
+            blackList.keyWords.Add("Not Safe For Work");
+            blackList.keyWords.Add("Lewd");
+            blackList.keyWords.Add("Nude");
+            blackList.keyWords.Add("Naked");
+            blackList.keyWords.Add("Hentai");
+            wallpaperManager.monitorSettings = new List<MonitorSetting>();
+            wallpaperManager.getScreenSpace();
         }
     }
 }

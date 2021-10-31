@@ -5,17 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AutoPape"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="1394.047">
-    <StackPanel Orientation="Horizontal" Name="stackPanelTest">
-        
+        Title="MainWindow" Height="450" Width="1715.013">
+    <StackPanel Orientation="Horizontal" Name="stackPanelTest" Margin="0,0,2,0">
+
         <ScrollViewer Margin="0, 10, 0, 10">
             <WrapPanel Height="Auto" Width="670" Name="catalogPanel"/>
         </ScrollViewer>
-
-        <ScrollViewer HorizontalAlignment="Left" Height="Auto" Margin="0,10,0,10" VerticalAlignment="Top" Width="300" Name="scrollPanelThread">
-            <StackPanel Height="Auto" Width="Auto" Name="threadPanel"/>
-        </ScrollViewer>
-        <StackPanel Width="270">
+        <Grid Height="Auto" VerticalAlignment="Stretch" Margin="0,10,0,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Button Height="50" Content="Save" Name="SaveButton" Grid.Row="0"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Height="Auto" Margin="0,10,0,10" VerticalAlignment="Top" Width="300" Grid.Row="1" Name="scrollPanelThread">
+                <StackPanel Height="Auto" Width="Auto" Name="threadPanel"/>
+            </ScrollViewer>
+        </Grid>
+        <StackPanel Width="270" >
             <TextBlock Text="Monitor: "/>
             <ComboBox Width="120" Name="MonitorBox"/>
             <TextBlock TextWrapping="Wrap" Text="Orientation: " Name="orientationInfo"/>
@@ -32,6 +38,14 @@
             <ComboBox Width="120" Name="wideMode"/>
             <Button Content="Apply" Click="applySettings" Name="Apply"/>
             <!--<TextBlock TextWrapping="Wrap" Text="Narrower wallpapers have a lower bound of 1:1 when the "/>-->
+        </StackPanel>
+        <StackPanel Width="270">
+            <TextBlock Text="Blacklist: "/>
+            <TextBox Width="120" Name="BlackListText"/>
+            <Button Height="25" Content="add" Name="BlackListAdd"/>
+            <ScrollViewer Height="100" VerticalScrollBarVisibility="Auto">
+                <WrapPanel Height="Auto" Width="270" Name="BlackList"/>
+            </ScrollViewer>
         </StackPanel>
     </StackPanel>
 
