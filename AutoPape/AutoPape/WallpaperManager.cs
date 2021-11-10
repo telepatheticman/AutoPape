@@ -46,7 +46,23 @@ namespace AutoPape
         {
             get
             {
-                return width > height ? orientation.horizontal : orientation.vertical;
+                return width >= height ? orientation.horizontal : orientation.vertical;
+            }
+        }
+        public double aspectRatio
+        {
+            get
+            {
+                return orientation == orientation.horizontal ?
+                    (double)width / (double)height : (double)height / (double)width;
+            }
+        }
+        [XmlIgnore]
+        public int resolution
+        {
+            get
+            {
+                return width >= height ? height : width;
             }
         }
         [XmlIgnore]

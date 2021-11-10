@@ -37,8 +37,10 @@ namespace AutoPape
         WrapPanel wrapPanel = null;
         //List<System.Windows.Controls.StackPanel> 
         HttpClient client;
-        AutoPape.Thread threadInfo = null;
+        //AutoPape.Thread threadInfo = null;
         int numThreads { get { return threads.Count; } }
+
+        bool fromDisk;
 
         SettingsManager manager;
 
@@ -47,13 +49,13 @@ namespace AutoPape
             
             this.board = "wg";
             url = $"https://boards.4chan.org/{board}/catalog";
-            urlArchive = $"";
+            urlArchive = $"https://boards.4chan.org/{board}/archive";
             threads = new List<Thread>();
             client = new HttpClient();
             //buildCatalogInfoAsync();
 
         }
-        public Catalog(string board, WrapPanel wrapPanel, StackPanel stackPanel, SettingsManager manager)
+        public Catalog(string board, WrapPanel wrapPanel, StackPanel stackPanel, SettingsManager manager, bool fromDisk)
         {
             this.board = board;
             this.wrapPanel = wrapPanel;
@@ -61,7 +63,7 @@ namespace AutoPape
             url = $"https://boards.4chan.org/{board}/catalog";
             threads = new List<Thread>();
             client = new HttpClient();
-
+            this.fromDisk = fromDisk;
             this.manager = manager;
         }
 
@@ -108,6 +110,11 @@ namespace AutoPape
             
         }
 
+        public async void buildFromDiskAsync()
+        {
+            await Task.Run(() => buildFromDisk());
+        }
+
         void buildCatalogInfo()
         {
             var task = client.GetStringAsync(url);
@@ -133,6 +140,7 @@ namespace AutoPape
                         $"https://i.4cdn.org/{board}/{catalogThread.imgurl}s.jpg",
                         client,
                         catalogThread.imgurl == "deleted");
+                //threads.Last().buildThreadImageInfoAsync();
 
                 System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                 {
@@ -171,10 +179,22 @@ namespace AutoPape
             //buildFromDisk();
         }
 
-        public async void buildCatalogInfoAsync(Timer timer)
+        public async void buildCatalogInfoAsync()
         {
             await Task.Run(() => buildCatalogInfo());
-            timer.Start();
+            //timer.Start();
+        }
+
+        public async void build()
+        {
+            if(fromDisk)
+            {
+                await Task.Run(() => buildFromDisk());
+            }
+            else
+            {
+                await Task.Run(() => buildCatalogInfo());
+            }
         }
 
         private void setThread(Thread thread)
@@ -192,17 +212,23 @@ namespace AutoPape
                 List<string> validImages = new List<string>();
                 foreach(var thread in threads)
                 {
-                    if(thread.fromDisk)
+                    if(manager.validThread(thread))
                     {
-                        foreach(var url in thread.threadImages)
+                        foreach(var image in thread.threadImages)
                         {
-                            validImages.Add(url.imageurl);
+                            if (Utility.validImage(image, monitor, client)) validImages.Add(image.imageurl);
                         }
                     }
+                    if (validImages.Count() >= 10) break;
                 }
-                Random rand = new Random();
-                string image = validImages.ElementAt(rand.Next(0, validImages.Count() - 1));
-                monitor.Image = System.Drawing.Image.FromFile(image);
+                if(validImages.Count() > 0)
+                {
+                    Random rand = new Random();
+                    string imageUrl = validImages.ElementAt(rand.Next(0, validImages.Count() - 1));
+                    //monitor.Image = System.Drawing.Image.FromFile(image);
+                    monitor.Image = Utility.controlToDrawingImage(Utility.imageFromURL(imageUrl, client, false));
+                }
+
             }
             manager.wallpaperManager.buildWallpaper();
         }

@@ -72,20 +72,20 @@ namespace AutoPape
 
         public bool validThread(Thread check)
         {
-            bool valid = false;
+            bool valid = true;
 
-            foreach (var keyword in keyWords)
+            /*foreach (var keyword in keyWords)
             {
                 if (check.sub.Contains(keyword) || check.teaser.Contains(keyword))
                 {
                     valid = true;
                     break;
                 }
-            }
+            }*/
 
             foreach (var keyword in blackList.keyWords)
             {
-                if (check.sub.Contains(keyword) || check.teaser.Contains(keyword))
+                if (check.sub.ToLower().Contains(keyword) || check.teaser.ToLower().Contains(keyword))
                 {
                     valid = false;
                     break;
@@ -140,6 +140,8 @@ namespace AutoPape
             blackList.keyWords.Add("Nude");
             blackList.keyWords.Add("Naked");
             blackList.keyWords.Add("Hentai");
+            blackList.keyWords.Add("Desktop");
+            blackList.keyWords.Add("Homescreen");
             wallpaperManager.monitorSettings = new List<MonitorSetting>();
             wallpaperManager.getScreenSpace();
         }

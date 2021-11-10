@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using Image = System.Windows.Controls.Image;
+using BitmapImage = System.Windows.Media.Imaging.BitmapImage;
+using System.Windows.Media.Imaging;
 
 namespace AutoPape
 {
@@ -81,10 +83,12 @@ namespace AutoPape
             return path;
         }
 
-        public static Image imageFromURL(string url, HttpClient client, bool deleted)
+        public static Image imageFromURL(string url, HttpClient client, bool deleted, int attempts = 3)
         {
             Image image = null;
-            byte[] imageByte;
+            byte[] imageByte = null;
+
+            if (!url.Contains("https")) url = "https://" + url;
 
             if(deleted)
             {
@@ -93,8 +97,21 @@ namespace AutoPape
             }
             else
             {
-                var thumbNailTask = client.GetByteArrayAsync(url);
-                imageByte = thumbNailTask.GetAwaiter().GetResult();
+                for(int i = 0; i < attempts; i++)
+                {
+                    try
+                    {
+                        var thumbNailTask = client.GetByteArrayAsync(url);
+                        imageByte = thumbNailTask.GetAwaiter().GetResult();
+                        break;
+                    }
+                    catch(Exception ex)
+                    {
+                        if (i + 1 == attempts) return null;
+                        continue;
+                    }
+                }
+
             }
 
             MemoryStream ms = new MemoryStream(imageByte);
@@ -112,6 +129,27 @@ namespace AutoPape
 
             });
             return image;
+        }
+
+        public static System.Drawing.Image controlToDrawingImage(Image from)
+        {
+            System.Drawing.Image to = null;
+
+            var ms = new MemoryStream();
+            BitmapEncoder enc = new BmpBitmapEncoder();
+            BitmapImage imageBitmap = ((BitmapImage)from.Source);
+            enc.Frames.Add(BitmapFrame.Create(imageBitmap));
+            enc.Save(ms);
+            Bitmap image = new Bitmap(ms);
+            //Bitmap image = new Bitmap()
+            
+
+            ImageConverter converter = new ImageConverter();
+
+            ms = new System.IO.MemoryStream((byte[])converter.ConvertTo(image, typeof(byte[])));
+            to = System.Drawing.Image.FromStream(ms);
+
+            return to;
         }
 
         public static Image imageFromDisk(string path)
@@ -164,5 +202,51 @@ namespace AutoPape
 
             return ms;
         }
+
+        public static bool validImage(ThreadImage image, MonitorSetting settings, HttpClient client)
+        {
+            //This can be re-writen as a series of &= operations on valid
+            bool valid = false;
+            bool thumbnailCheck = image.resolution <= 1;
+            if (!(settings.orientation == image.orientation)) return false;
+            double tolerance = thumbnailCheck ? .05 : .02; // +/- .05 if thumbnail, +/- .02 if full
+            double ratio = thumbnailCheck ? image.thumbAspectRatio : image.aspectRatio;
+            valid |= settings.allowWider && ratio > settings.aspectRatio;
+            valid |= settings.allowNarrower && ratio < settings.aspectRatio;
+            valid |= ratio < settings.aspectRatio + tolerance && ratio > settings.aspectRatio - tolerance;
+            if (!valid) return valid;
+            if(thumbnailCheck)
+            {
+                Image full =
+                    imageFromURL(
+                        "https://" + image.imageurl,
+                        client,
+                        image.imageurl == null);
+                image.width = ((BitmapImage)full.Source).PixelWidth;
+                image.height = ((BitmapImage)full.Source).PixelHeight;
+            }
+            if (!(image.resolution >= settings.minimumResolution)) valid = false; 
+            return valid;
+        }
+
+        public static void Shuffle<T> (this List<T> list)
+        {
+            Random rand = new Random();
+            for(int i = 0; i < 3; i++)
+            {
+                for(int indexA = 0; indexA < list.Count(); indexA++)
+                {
+                    int indexB;
+                    do
+                    {
+                        indexB = rand.Next(0, list.Count() - 1);
+                    } while (indexB != indexA);
+                    var temp = list[indexA];
+                    list[indexA] = list[indexB];
+                    list[indexB] = temp;
+                }
+            }
+        }
+
     }
 }

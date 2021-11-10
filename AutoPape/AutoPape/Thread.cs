@@ -17,13 +17,11 @@ namespace AutoPape
 {
     public enum orientation
     {
-        [XmlEnum("Vertical")]
         vertical,
-        [XmlEnum("Horizontal")]
         horizontal
     }
 
-    public class threadImage
+    public class ThreadImage
     {
         //public imageInfo ImageInfo
 
@@ -33,15 +31,52 @@ namespace AutoPape
         public int width = 1;
         [XmlAttribute("Height")]
         public int height = 1;
-        [XmlAttribute("Orientation")]
+        [XmlIgnore]
         public orientation orientation
         {
             get
             {
-                return width > height ? orientation.horizontal : orientation.vertical;
+                return width >= height ? orientation.horizontal : orientation.vertical;
             }
         }
-
+        [XmlIgnore]
+        public double aspectRatio
+        {
+            get
+            {
+                return orientation == orientation.horizontal ? 
+                    (double)width / (double)height : (double)height / (double)width;
+            }
+        }
+        [XmlIgnore]
+        public int resolution
+        {
+            get
+            {
+                return width >= height ? height : width;
+            }
+        }
+        [XmlIgnore]
+        public int thumbWidth = 1;
+        [XmlIgnore]
+        public int thumbHeight = 1;
+        [XmlIgnore]
+        public orientation thumbOrientation
+        {
+            get
+            {
+                return thumbWidth >= thumbHeight ? orientation.horizontal : orientation.vertical;
+            }
+        }
+        [XmlIgnore]
+        public double thumbAspectRatio
+        {
+            get
+            {
+                return thumbOrientation == orientation.horizontal ?
+                    (double)thumbWidth / (double)thumbHeight : (double)thumbHeight / (double)thumbWidth;
+            }
+        }
         [XmlIgnore]
         public string imageurl { get; set; }
         [XmlIgnore]
@@ -72,7 +107,7 @@ namespace AutoPape
         [XmlIgnore]
         public StackPanel threadPanel = null;
         [XmlArray("ThreadImages")]
-        public List<threadImage> threadImages;
+        public List<ThreadImage> threadImages;
         [XmlIgnore]
         public bool fromDisk;
 
@@ -82,7 +117,7 @@ namespace AutoPape
             threadId = "";
             url = "";
             client = new HttpClient();
-            threadImages = new List<threadImage>();
+            threadImages = new List<ThreadImage>();
         }
 
         public Thread(string board, string threadId, StackPanel stackPanel, string sub, string teaser)
@@ -93,23 +128,25 @@ namespace AutoPape
             this.teaser = teaser;
             url = $"https://boards.4chan.org/{board}/thread/{threadId}";
             threadPanel = stackPanel;
-            threadImages = new List<threadImage>();
+            threadImages = new List<ThreadImage>();
             client = new HttpClient();
             rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/"+board+ @"\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
         }
 
-        void buildThreadImageInfo()
+        private void buildThreadImageInfo()
         {
             foreach (var image in threadImages)
             {
-                Image full =
+                Image thumb =
                     Utility.imageFromURL(
-                        "https://" + image.imageurl,
+                        "https://" + image.thumburl,
                         client,
-                        image.imageurl == null);
-
-                image.width = (int)full.Width;
-                image.height = (int)full.Height;
+                        image.thumburl == null);
+                System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                {
+                    image.thumbWidth = ((BitmapImage)thumb.Source).PixelWidth;
+                    image.thumbHeight = ((BitmapImage)thumb.Source).PixelHeight;
+                });
 
             }
         }
@@ -138,7 +175,7 @@ namespace AutoPape
                         skipped = true;
                         continue;
                     }
-                    threadImages.Add(new threadImage());
+                    threadImages.Add(new ThreadImage());
                     threadImages.Last().imagename = rxNames.Match(match.Value.Substring(9)).Value;
                     continue;
                 }
@@ -159,6 +196,7 @@ namespace AutoPape
                     threadImages.Last().thumburl = match.Value;
                 }
             }
+            buildThreadImageInfo();
         }
 
         public async void buildThreadFromWebAsync()
@@ -250,7 +288,9 @@ namespace AutoPape
 
             foreach(var thread in threadImages)
             {
-                if(thread.imagename != null)
+                if(thread.imagename != null && 
+                    !File.Exists(Utility.pathToImage(board, threadId, thread.imagename, imageType.fullImage)) ||
+                    !File.Exists(Utility.pathToImage(board, threadId, thread.imagename, imageType.thumbnail)))
                 {
                     Image toSave =
                     Utility.imageFromURL(
@@ -287,7 +327,6 @@ namespace AutoPape
         {
             await Task.Run(() => saveThread()); ;
         }
-
         public void saveImage(string path, string name, Image toSave)
         {
             BitmapImage imageBitmap = new BitmapImage();
@@ -295,15 +334,16 @@ namespace AutoPape
             {
                 imageBitmap = ((BitmapImage)toSave.Source);
                 PngBitmapEncoder encoder = new PngBitmapEncoder();
-                //Issue saving thread when already loaded from disk
-                //Short term: Dont load from disk? Yes.
-                //Long term: Load from disk seperate from loading from web? Likely
-                FileStream stream = new FileStream(Path.Combine(path, name + ".png"), FileMode.Create);
-                encoder.Interlace = PngInterlaceOption.On;
-                encoder.Frames.Add(BitmapFrame.Create(imageBitmap));
-                encoder.Save(stream);
-                stream.Flush();
-                stream.Close();
+                //Dont need to save if I already have it
+                if(!File.Exists(Path.Combine(path, name + ".png")))
+                {
+                    FileStream stream = new FileStream(Path.Combine(path, name + ".png"), FileMode.Create);
+                    encoder.Interlace = PngInterlaceOption.On;
+                    encoder.Frames.Add(BitmapFrame.Create(imageBitmap));
+                    encoder.Save(stream);
+                    stream.Flush();
+                    stream.Close();
+                }
             });
         }
 
