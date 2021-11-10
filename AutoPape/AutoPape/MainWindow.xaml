@@ -7,10 +7,29 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="1715.013">
     <StackPanel Orientation="Horizontal" Name="stackPanelTest" Margin="0,0,2,0">
+        <TabControl >
+            <TabItem Header="WG">
+                <ScrollViewer Margin="0, 10, 0, 10">
+                    <WrapPanel Height="Auto" Width="670" Name="catalogPanelWG"/>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="WG Saved">
+                <ScrollViewer Margin="0, 10, 0, 10">
+                    <WrapPanel Height="Auto" Width="670" Name="catalogPanelWGSaved"/>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="W">
+                <ScrollViewer Margin="0, 10, 0, 10">
+                    <WrapPanel Height="Auto" Width="670" Name="catalogPanelW"/>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="W Saved">
+                <ScrollViewer Margin="0, 10, 0, 10">
+                    <WrapPanel Height="Auto" Width="670" Name="catalogPanelWSaved"/>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
 
-        <ScrollViewer Margin="0, 10, 0, 10">
-            <WrapPanel Height="Auto" Width="670" Name="catalogPanel"/>
-        </ScrollViewer>
         <Grid Height="Auto" VerticalAlignment="Stretch" Margin="0,10,0,10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />

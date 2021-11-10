@@ -84,7 +84,7 @@ namespace AutoPape
 
             setWallpaper = new Timer();
             setWallpaper.Enabled = false;
-            setWallpaper.Interval = 500000;
+            setWallpaper.Interval = 5000;
             setWallpaper.Tick += new EventHandler(setWallpaperTick);
 
             MonitorBox.SelectionChanged += 
@@ -120,7 +120,7 @@ namespace AutoPape
                 saveClicked();
             };
 
-            catalog = new Catalog("wg", catalogPanel, threadPanel, manager);
+            catalog = new Catalog("wg", catalogPanelWG, threadPanel, manager);
             catalog.buildCatalogInfoAsync(setWallpaper);
         }
 
@@ -164,7 +164,7 @@ namespace AutoPape
 
         public void setWallpaperTick(object sender, EventArgs eventArgs)
         {
-            //catalog.setWallpaper();
+            catalog.setWallpaper();
         }
 
     }
