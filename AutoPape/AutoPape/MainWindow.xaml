@@ -33,10 +33,12 @@
         <Grid Height="Auto" VerticalAlignment="Stretch" Margin="0,10,0,10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Button Height="50" Content="Save" Name="SaveButton" Grid.Row="0"/>
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Height="Auto" Margin="0,10,0,10" VerticalAlignment="Top" Width="300" Grid.Row="1" Name="scrollPanelThread">
+            <ProgressBar Grid.Row="1" Height="20" Name="ThreadProgress"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Height="Auto" Margin="0,10,0,10" VerticalAlignment="Top" Width="300" Grid.Row="2" Name="scrollPanelThread">
                 <StackPanel Height="Auto" Width="Auto" Name="threadPanel"/>
             </ScrollViewer>
         </Grid>
