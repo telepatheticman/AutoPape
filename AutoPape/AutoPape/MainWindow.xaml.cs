@@ -32,7 +32,8 @@ namespace AutoPape
         Timer setWallpaper;
         SettingsManager manager;
         WallpaperManager wallManger;
-        Catalog catalog;
+        Catalog catalogWG;
+        Catalog catalogWGDisk;
 
         private void textBoxLimit(object sender, TextCompositionEventArgs e)
         {
@@ -120,13 +121,18 @@ namespace AutoPape
                 saveClicked();
             };
 
-            catalog = new Catalog("wg", catalogPanelWG, threadPanel, manager);
-            catalog.buildCatalogInfoAsync(setWallpaper);
+            catalogWG = new Catalog("wg", catalogPanelWG, threadPanel, manager, false);
+            catalogWGDisk = new Catalog("wg", catalogPanelWGSaved, threadPanel, manager, true);
+            CatalogManager caManager = new CatalogManager();
+            caManager.add(catalogWG);
+            caManager.add(catalogWGDisk);
+            caManager.buildAll();
+            //catalogWG.buildCatalogInfoAsync(setWallpaper);
         }
 
         public void saveClicked()
         {
-            catalog.activeThread.saveThreadAsync();
+            catalogWG.activeThread.saveThreadAsync();
         }
 
         public void addBlackListItem(SettingsManager settings, string toAdd, bool fromList = false)
@@ -164,7 +170,7 @@ namespace AutoPape
 
         public void setWallpaperTick(object sender, EventArgs eventArgs)
         {
-            catalog.setWallpaper();
+            catalogWG.setWallpaper();
         }
 
     }

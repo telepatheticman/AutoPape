@@ -87,6 +87,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="CatalogManager.cs" />
     <Compile Include="SettingsManager.cs" />
     <Compile Include="Thread.cs" />
     <Compile Include="Utility.cs" />

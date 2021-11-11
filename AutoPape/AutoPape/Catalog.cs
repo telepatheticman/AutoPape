@@ -67,6 +67,12 @@ namespace AutoPape
             this.manager = manager;
         }
 
+        public void clear()
+        {
+            threads = new List<Thread>();
+            activeThread = null;
+        }
+
         public void buildFromDisk()
         {
             System.IO.DirectoryInfo info = new DirectoryInfo(Utility.pathToBoardDirectory(board));
