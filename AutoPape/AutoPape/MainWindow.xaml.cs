@@ -32,6 +32,7 @@ namespace AutoPape
         Timer setWallpaper;
         SettingsManager manager;
         WallpaperManager wallManger;
+        ThreadPanelManager threadPanelManager;
         Catalog catalogWG;
         Catalog catalogWGDisk;
 
@@ -120,9 +121,9 @@ namespace AutoPape
             {
                 saveClicked();
             };
-
-            catalogWG = new Catalog("wg", catalogPanelWG, threadPanel, manager, false);
-            catalogWGDisk = new Catalog("wg", catalogPanelWGSaved, threadPanel, manager, true);
+            threadPanelManager = new ThreadPanelManager(ThreadProgress, SaveButton, threadPanel);
+            catalogWG = new Catalog("wg", catalogPanelWG, threadPanelManager, manager, false);
+            catalogWGDisk = new Catalog("wg", catalogPanelWGSaved, threadPanelManager, manager, true);
             CatalogManager caManager = new CatalogManager();
             caManager.add(catalogWG);
             caManager.add(catalogWGDisk);

@@ -90,6 +90,7 @@
     <Compile Include="CatalogManager.cs" />
     <Compile Include="SettingsManager.cs" />
     <Compile Include="Thread.cs" />
+    <Compile Include="ThreadPanelManager.cs" />
     <Compile Include="Utility.cs" />
     <Compile Include="WallpaperManager.cs" />
     <Page Include="MainWindow.xaml">

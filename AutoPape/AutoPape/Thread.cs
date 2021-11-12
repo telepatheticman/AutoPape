@@ -105,7 +105,7 @@ namespace AutoPape
         [XmlIgnore]
         HttpClient client = null;
         [XmlIgnore]
-        public StackPanel threadPanel = null;
+        public ThreadPanelManager threadPanel = null;
         [XmlArray("ThreadImages")]
         public List<ThreadImage> threadImages;
         [XmlIgnore]
@@ -120,14 +120,14 @@ namespace AutoPape
             threadImages = new List<ThreadImage>();
         }
 
-        public Thread(string board, string threadId, StackPanel stackPanel, string sub, string teaser)
+        public Thread(string board, string threadId, ThreadPanelManager threadPanel, string sub, string teaser)
         {
             this.threadId = threadId;
             this.board = board;
             this.sub = sub;
             this.teaser = teaser;
             url = $"https://boards.4chan.org/{board}/thread/{threadId}";
-            threadPanel = stackPanel;
+            this.threadPanel = threadPanel;
             threadImages = new List<ThreadImage>();
             client = new HttpClient();
             rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/"+board+ @"\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
@@ -156,7 +156,7 @@ namespace AutoPape
             await Task.Run(() => buildThreadImageInfo()); ;
         }
 
-        void buildThreadFromWeb()
+        public void buildThreadFromWeb()
         {
             fromDisk = false;
             var task = client.GetStringAsync(url);
@@ -196,7 +196,7 @@ namespace AutoPape
                     threadImages.Last().thumburl = match.Value;
                 }
             }
-            buildThreadImageInfo();
+            //buildThreadImageInfo();
         }
 
         public async void buildThreadFromWebAsync()
@@ -244,6 +244,7 @@ namespace AutoPape
 
         public void setThreadContent(List<Image> thumbs)
         {
+            if (!threadPanel.startProc(threadImages.Count())) return;
             for(int i = 0; i < threadImages.Count(); i++)
             {
                 if (fromDisk)
@@ -263,10 +264,11 @@ namespace AutoPape
                 }
                 System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                 {
-                    threadPanel.Children.Add(thumbs[i]);
                     thumbs[i].Margin = new Thickness(10);
+                    threadPanel.Add(thumbs[i], i);
                 });
             }
+            threadPanel.endProc();
         }
 
         public async void setThreadContentAsync()
@@ -281,11 +283,15 @@ namespace AutoPape
 
         public void saveThread()
         {
+            if (fromDisk) return;
+            if (!threadPanel.startProc(threadImages.Count(), false)) return;
+
             string fullDirectory = Utility.pathToImageDirectory(board, threadId, imageType.fullImage);
             string thumbDirecotry = Utility.pathToImageDirectory(board, threadId, imageType.thumbnail);
             Directory.CreateDirectory(fullDirectory);
             Directory.CreateDirectory(thumbDirecotry);
 
+            int image = 0;
             foreach(var thread in threadImages)
             {
                 if(thread.imagename != null && 
@@ -310,6 +316,8 @@ namespace AutoPape
                         thread.thumburl == null);
                     saveImage(thumbDirecotry, thread.imagename, thumbToSave);
                 }
+                threadPanel.Add(image);
+                image++;
             }
 
             XmlSerializer xmlSerializer = new XmlSerializer(this.GetType());
@@ -321,6 +329,8 @@ namespace AutoPape
                 FileMode.Create
                 );
             xmlSerializer.Serialize(stream, this);
+
+            threadPanel.endProc();
         }
 
         public async void saveThreadAsync()
@@ -345,11 +355,6 @@ namespace AutoPape
                     stream.Close();
                 }
             });
-        }
-
-        public void clearChildren()
-        {
-            threadPanel.Children.Clear();
         }
     }
 }

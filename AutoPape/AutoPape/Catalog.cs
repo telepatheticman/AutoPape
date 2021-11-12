@@ -33,7 +33,7 @@ namespace AutoPape
         Regex rxThreads = new Regex("\\\"[0-9]*\\\":.*?},.*?\\},");
         public List<Thread> threads;
         public Thread activeThread;
-        public StackPanel threadImages = null;
+        public ThreadPanelManager threadPanel = null;
         WrapPanel wrapPanel = null;
         //List<System.Windows.Controls.StackPanel> 
         HttpClient client;
@@ -55,11 +55,11 @@ namespace AutoPape
             //buildCatalogInfoAsync();
 
         }
-        public Catalog(string board, WrapPanel wrapPanel, StackPanel stackPanel, SettingsManager manager, bool fromDisk)
+        public Catalog(string board, WrapPanel wrapPanel, ThreadPanelManager threadPanel, SettingsManager manager, bool fromDisk)
         {
             this.board = board;
             this.wrapPanel = wrapPanel;
-            this.threadImages = stackPanel;
+            this.threadPanel = threadPanel;
             url = $"https://boards.4chan.org/{board}/catalog";
             threads = new List<Thread>();
             client = new HttpClient();
@@ -73,6 +73,44 @@ namespace AutoPape
             activeThread = null;
         }
 
+        void buildItem(Thread thread)
+        {
+            if (!thread.fromDisk) thread.buildThreadFromWeb();
+            System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+            {
+                Button Item = new Button();
+                StackPanel content = new StackPanel();
+                content.VerticalAlignment = VerticalAlignment.Top;
+                Item.VerticalContentAlignment = VerticalAlignment.Top;
+                Item.Content = content;
+                Item.Width = 200;
+                Item.Height = Double.NaN;
+                Item.Margin = new Thickness(10);
+                string ID = thread.threadId;
+                string imageNum = thread.threadImages.Count().ToString();
+                string subject = thread.sub;
+                string tease = thread.teaser;
+                Item.Click += (o, e) => setThread(thread);
+                if (!thread.fromDisk) thread.buildThreadImageInfoAsync();
+
+                content.Children.Add(thread.teaserThumb);
+
+                TextBlock block = new TextBlock();
+                block.TextWrapping = TextWrapping.Wrap;
+
+                block.Text = "Thread: " + ID;
+                block.Text += "\n";
+                block.Text += "Images: " + imageNum;
+                block.Text += "\n";
+                block.Text += subject.Length > 200 ? subject.Substring(0, 200) + "..." : subject;
+                block.Text += "\n";
+                block.Text += tease.Length > 500 ? tease.Substring(0, 500) + "..." : tease;
+                content.Children.Add(block);
+                wrapPanel.Children.Add(Item);
+
+            });
+        }
+
         public void buildFromDisk()
         {
             System.IO.DirectoryInfo info = new DirectoryInfo(Utility.pathToBoardDirectory(board));
@@ -80,38 +118,8 @@ namespace AutoPape
             {
                 threads.Add(new Thread());
                 threads.Last().buildThreadFromDisk(board, directory.Name);
-                threads.Last().threadPanel = threadImages;
-                System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
-                {
-
-
-
-                    Button Item = new Button();
-                    StackPanel content = new StackPanel();
-                    content.VerticalAlignment = VerticalAlignment.Top;
-                    Item.VerticalContentAlignment = VerticalAlignment.Top;
-                    Item.Content = content;
-                    Item.Width = 200;
-                    Item.Height = Double.NaN;
-                    Item.Margin = new Thickness(10);
-                    string s = threads.Last().threadId;
-                    string subject = threads.Last().sub;
-                    string tease = threads.Last().teaser;
-                    var currentThread = threads.Last();
-                    Item.Click += (o, e) => setThread(currentThread);
-
-                    content.Children.Add(threads.Last().teaserThumb);
-
-                    TextBlock block = new TextBlock();
-                    block.TextWrapping = TextWrapping.Wrap;
-
-                    block.Text = subject.Length > 200 ? subject.Substring(0, 200) + "..." : subject;
-                    block.Text += "\n";
-                    block.Text += tease.Length > 500 ? tease.Substring(0, 500) + "..." : tease;
-                    content.Children.Add(block);
-                    wrapPanel.Children.Add(Item);
-
-                });
+                threads.Last().threadPanel = threadPanel;
+                buildItem(threads.Last());
             }
             
         }
@@ -134,7 +142,7 @@ namespace AutoPape
                 string threadSanitized = thread.Value.Substring(thread.Value.IndexOf(':') + 1).TrimEnd(',', '}') + "}";
                 CatalogThread catalogThread = JsonSerializer.Deserialize<CatalogThread>(threadSanitized);
                 catalogThread.threadId = thread.Value.Split(':').First().Trim('\"');
-                threads.Add(new Thread(board, catalogThread.threadId, threadImages, catalogThread.sub, catalogThread.teaser));
+                threads.Add(new Thread(board, catalogThread.threadId, threadPanel, catalogThread.sub, catalogThread.teaser));
                 
                 threads.Last().sub = Utility.cleanHTMLString(threads.Last().sub);
 
@@ -148,39 +156,7 @@ namespace AutoPape
                         catalogThread.imgurl == "deleted");
                 //threads.Last().buildThreadImageInfoAsync();
 
-                System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
-                {
-
-                    
-
-                    Button Item = new Button();
-                    StackPanel content = new StackPanel();
-                    content.VerticalAlignment = VerticalAlignment.Top;
-                    Item.VerticalContentAlignment = VerticalAlignment.Top;
-                    Item.Content = content;
-                    Item.Width = 200;
-                    Item.Height = Double.NaN;
-                    Item.Margin = new Thickness(10);
-                    string s = threads.Last().threadId;
-                    string subject = threads.Last().sub;
-                    string tease = threads.Last().teaser;
-                    var currentThread = threads.Last();
-                    currentThread.buildThreadFromWebAsync();
-                    Item.Click += (o, e) => setThread(currentThread);
-
-                    content.Children.Add(threads.Last().teaserThumb);
-
-                    TextBlock block = new TextBlock();
-                    block.TextWrapping = TextWrapping.Wrap;
-
-                    block.Text = subject.Length > 200 ? subject.Substring(0, 200) + "..." : subject;
-                    block.Text += "\n";
-                    block.Text += tease.Length > 500 ? tease.Substring(0, 500) + "..." : tease;
-                    content.Children.Add(block);
-                    wrapPanel.Children.Add(Item);
-                    
-                });
-                
+                buildItem(threads.Last());
             }
             //buildFromDisk();
         }
@@ -206,7 +182,6 @@ namespace AutoPape
         private void setThread(Thread thread)
         {
             activeThread = thread;
-            thread.clearChildren();
             thread.setThreadContentAsync();
             //threadInfo.saveThread();
         }
