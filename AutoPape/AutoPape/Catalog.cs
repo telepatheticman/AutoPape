@@ -31,6 +31,10 @@ namespace AutoPape
         string urlArchive;
         Regex rxFullJson = new Regex("\\{\\\"threads\\\".*?\\};");
         Regex rxThreads = new Regex("\\\"[0-9]*\\\":.*?},.*?\\},");
+
+        Regex rxArchiveThreads = new Regex(@"\<td\>[0-9]+");
+        Regex reArchiveSub = new Regex("\\<span class=\\\"subject\\\"\\>.*?\\<\\/span\\>");
+        Regex rxArchiveTeaser = new Regex("\\<blockquote.*?\\\"m.*?\\\"\\>.*?\\<\\/blockquote\\>");
         public List<Thread> threads;
         public Thread activeThread;
         public ThreadPanelManager threadPanel = null;
@@ -127,6 +131,12 @@ namespace AutoPape
         public async void buildFromDiskAsync()
         {
             await Task.Run(() => buildFromDisk());
+        }
+
+        void buildArchive()
+        {
+            var task = client.GetStringAsync(url);
+            string result = task.GetAwaiter().GetResult();
         }
 
         void buildCatalogInfo()

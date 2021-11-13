@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using Image = System.Windows.Controls.Image;
 using BitmapImage = System.Windows.Media.Imaging.BitmapImage;
 using System.Windows.Media.Imaging;
+using System.Text.RegularExpressions;
 
 namespace AutoPape
 {
@@ -27,6 +28,15 @@ namespace AutoPape
         public const string fullImagePath = "Full_Images";
         public const string thumbnailPath = "Thumbnails";
         public const string parent = "AutoPape";
+
+        public static string cleanArchiveString(string toClean)
+        {
+            string clean = toClean;
+            Regex rxHTMLElement = new Regex("\\<.*?\\>");
+            var elements = rxHTMLElement.Matches(clean);
+
+            return clean;
+        }
         public static string cleanHTMLString(string toClean)
         {
             string clean = toClean;
