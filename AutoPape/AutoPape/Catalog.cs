@@ -167,7 +167,7 @@ namespace AutoPape
             //timer.Start();
         }
 
-        public async void build()
+        public async void buildAsync()
         {
             if(fromDisk)
             {

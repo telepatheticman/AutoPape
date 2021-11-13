@@ -3,24 +3,31 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace AutoPape
 {
     class CatalogManager
     {
         public List<Catalog> catalogs;
-        private Thread activeThread;
-        private Catalog activeCatalog;
+        Timer setPaper;
+        Timer refreshAndArchive;
         public CatalogManager()
         {
             catalogs = new List<Catalog>();
+            setPaper = new Timer();
+            refreshAndArchive = new Timer();
         }
 
-        public void buildAll()
+        public async void buildAllAsync()
+        {
+            await Task.Run(() => buildAll());
+        }
+        private void buildAll()
         {
             foreach(var catalog in catalogs)
             {
-                catalog.build();
+                catalog.buildAsync();
             }
         }
 
@@ -29,7 +36,7 @@ namespace AutoPape
             foreach(var catalog in catalogs)
             {
                 catalog.clear();
-                catalog.build();
+                catalog.buildAsync();
                 if (shuffle) catalog.threads.Shuffle();
             }
         }
@@ -41,6 +48,16 @@ namespace AutoPape
             {
                 catalogs.Add(toAdd);
             }
+        }
+
+        private void setPaperTick()
+        {
+
+        }
+
+        private void refreshTick()
+        {
+
         }
     }
 }

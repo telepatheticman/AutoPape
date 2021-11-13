@@ -127,7 +127,7 @@ namespace AutoPape
             CatalogManager caManager = new CatalogManager();
             caManager.add(catalogWG);
             caManager.add(catalogWGDisk);
-            caManager.buildAll();
+            caManager.buildAllAsync();
             //catalogWG.buildCatalogInfoAsync(setWallpaper);
         }
 

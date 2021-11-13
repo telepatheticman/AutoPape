@@ -153,7 +153,7 @@ namespace AutoPape
 
         public async void buildThreadImageInfoAsync()
         {
-            await Task.Run(() => buildThreadImageInfo()); ;
+            await Task.Run(() => buildThreadImageInfo());
         }
 
         public void buildThreadFromWeb()
