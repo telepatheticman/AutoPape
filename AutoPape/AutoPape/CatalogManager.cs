@@ -47,7 +47,7 @@ namespace AutoPape
             refresh.Interval = toNextHalf;
             setPaper.Start();
             refresh.Start();
-            setPaperTick(this, null);
+            setPaperNonTick();
         }
         private void buildAll()
         {
@@ -70,6 +70,13 @@ namespace AutoPape
             {
                 boards.Add(toAdd.board);
             }
+        }
+
+        private void setPaperNonTick()
+        {
+            Random rand = new Random();
+            int toUse = rand.Next(0, catalogs.Count());
+            catalogs[toUse].setWallpaperAsync();
         }
 
         private void setPaperTick(object sender, EventArgs e)
