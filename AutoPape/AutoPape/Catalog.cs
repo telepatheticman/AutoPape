@@ -14,9 +14,16 @@ using System.Windows;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Timer = System.Windows.Forms.Timer;
+using System.Threading;
 
 namespace AutoPape
 {
+    public enum catalogType
+    {
+        current,
+        archive,
+        saved
+    }
     public class CatalogThread
     {
         public string imgurl { get; set; } = "deleted";
@@ -26,14 +33,14 @@ namespace AutoPape
     }
     public class Catalog
     {
-        string board;
+        public string board;
         string url;
         string urlArchive;
         Regex rxFullJson = new Regex("\\{\\\"threads\\\".*?\\};");
         Regex rxThreads = new Regex("\\\"[0-9]*\\\":.*?},.*?\\},");
 
         Regex rxArchiveThreads = new Regex(@"\<td\>[0-9]+");
-        Regex reArchiveSub = new Regex("\\<span class=\\\"subject\\\"\\>.*?\\<\\/span\\>");
+        Regex rxArchiveSub = new Regex("\\<span class=\\\"subject\\\"\\>.*?\\<\\/span\\>");
         Regex rxArchiveTeaser = new Regex("\\<blockquote.*?\\\"m.*?\\\"\\>.*?\\<\\/blockquote\\>");
         public List<Thread> threads;
         public Thread activeThread;
@@ -44,7 +51,9 @@ namespace AutoPape
         //AutoPape.Thread threadInfo = null;
         int numThreads { get { return threads.Count; } }
 
-        bool fromDisk;
+        private Mutex mutex = new Mutex();
+
+        catalogType type;
 
         SettingsManager manager;
 
@@ -56,18 +65,31 @@ namespace AutoPape
             urlArchive = $"https://boards.4chan.org/{board}/archive";
             threads = new List<Thread>();
             client = new HttpClient();
+            //Replace with an enum type instead
+            type = catalogType.current;
             //buildCatalogInfoAsync();
 
         }
-        public Catalog(string board, WrapPanel wrapPanel, ThreadPanelManager threadPanel, SettingsManager manager, bool fromDisk)
+        public Catalog(string board, SettingsManager manager, catalogType type)
+        {
+            this.board = board;
+            url = $"https://boards.4chan.org/{board}/catalog";
+            urlArchive = $"https://boards.4chan.org/{board}/archive";
+            threads = new List<Thread>();
+            client = new HttpClient();
+            this.type = type;
+            this.manager = manager;
+        }
+        public Catalog(string board, WrapPanel wrapPanel, ThreadPanelManager threadPanel, SettingsManager manager, catalogType type)
         {
             this.board = board;
             this.wrapPanel = wrapPanel;
             this.threadPanel = threadPanel;
             url = $"https://boards.4chan.org/{board}/catalog";
+            urlArchive = $"https://boards.4chan.org/{board}/archive";
             threads = new List<Thread>();
             client = new HttpClient();
-            this.fromDisk = fromDisk;
+            this.type = type;
             this.manager = manager;
         }
 
@@ -77,9 +99,10 @@ namespace AutoPape
             activeThread = null;
         }
 
-        void buildItem(Thread thread)
+        void buildItem(Thread thread, bool needsTeaserThumb = false)
         {
-            if (!thread.fromDisk) thread.buildThreadFromWeb();
+            if (!thread.fromDisk) thread.buildThreadFromWeb(needsTeaserThumb);
+            if (thread.threadImages.Count() == 0) return;
             System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
             {
                 Button Item = new Button();
@@ -117,6 +140,7 @@ namespace AutoPape
 
         public void buildFromDisk()
         {
+            if (!mutex.WaitOne(300000)) return;
             System.IO.DirectoryInfo info = new DirectoryInfo(Utility.pathToBoardDirectory(board));
             foreach(var directory in info.GetDirectories())
             {
@@ -125,22 +149,36 @@ namespace AutoPape
                 threads.Last().threadPanel = threadPanel;
                 buildItem(threads.Last());
             }
-            
-        }
-
-        public async void buildFromDiskAsync()
-        {
-            await Task.Run(() => buildFromDisk());
+            mutex.ReleaseMutex();
         }
 
         void buildArchive()
         {
-            var task = client.GetStringAsync(url);
+            //TODO: Might need mutex here. Might not.
+            //if (!mutex.WaitOne(300000)) return;
+            var task = client.GetStringAsync(urlArchive);
             string result = task.GetAwaiter().GetResult();
+            var Threads = rxArchiveThreads.Matches(result);
+            foreach(var thread in Threads)
+            {
+                string threadID = Utility.cleanArchiveString(thread.ToString());
+                var threadURL = $"https://boards.4chan.org/{board}/thread/{threadID}";
+                var threadTask = client.GetStringAsync(threadURL);
+                string threadContent = threadTask.GetAwaiter().GetResult();
+                string sub = rxArchiveSub.Match(threadContent).ToString();
+                sub = Utility.cleanArchiveString(sub);
+                string teaser = rxArchiveTeaser.Match(threadContent).ToString();
+                teaser = Utility.cleanArchiveString(teaser);
+                threads.Add(new Thread(board, threadID, threadPanel, sub, teaser));
+                //buildItem(threads.Last(), true);
+                threads.Last().buildThreadFromWeb();
+                threads.Last().saveThread();
+            }
         }
 
         void buildCatalogInfo()
         {
+            if (!mutex.WaitOne(300000)) return;
             var task = client.GetStringAsync(url);
             string result = task.GetAwaiter().GetResult();
 
@@ -169,23 +207,44 @@ namespace AutoPape
                 buildItem(threads.Last());
             }
             //buildFromDisk();
-        }
-
-        public async void buildCatalogInfoAsync()
-        {
-            await Task.Run(() => buildCatalogInfo());
-            //timer.Start();
+            mutex.ReleaseMutex();
         }
 
         public async void buildAsync()
         {
-            if(fromDisk)
+            switch(type)
             {
-                await Task.Run(() => buildFromDisk());
+                case catalogType.current:
+                    await Task.Run(() => buildCatalogInfo());
+                    break;
+                case catalogType.archive:
+                    await Task.Run(() => buildArchive());
+                    break;
+                case catalogType.saved:
+                    await Task.Run(() => buildFromDisk());
+                    break;
+                default:
+                    return;
+
             }
-            else
+        }
+
+        public void build()
+        {
+            switch (type)
             {
-                await Task.Run(() => buildCatalogInfo());
+                case catalogType.current:
+                    buildCatalogInfo();
+                    break;
+                case catalogType.archive:
+                    buildArchive();
+                    break;
+                case catalogType.saved:
+                    buildFromDisk();
+                    break;
+                default:
+                    return;
+
             }
         }
 
@@ -198,16 +257,27 @@ namespace AutoPape
 
         public void setWallpaper()
         {
-            foreach(var monitor in manager.wallpaperManager.monitorSettings)
+            if (!mutex.WaitOne(300000)) return;
+            foreach (var monitor in manager.wallpaperManager.monitorSettings)
             {
+                //TODO: Shuffle a seperate list
                 List<string> validImages = new List<string>();
-                foreach(var thread in threads)
+                //List<Thread> threadsCopy = new List<Thread>();
+                //threadsCopy = Utility.DeepCopy(threads);
+                List<int> threadIndexList = Enumerable.Range(0, threads.Count()).ToList();
+                threadIndexList.Shuffle();
+                //threads.Shuffle();
+                foreach(int threadIndex in threadIndexList)
                 {
-                    if(manager.validThread(thread))
+                    //threads[threadIndex].threadImages.Shuffle();
+                    List<int> imageIndexList = Enumerable.Range(0, threads[threadIndex].threadImages.Count()).ToList();
+                    imageIndexList.Shuffle();
+                    if(manager.validThread(threads[threadIndex]))
                     {
-                        foreach(var image in thread.threadImages)
+                        foreach(int imageIndex in imageIndexList)
                         {
-                            if (Utility.validImage(image, monitor, client)) validImages.Add(image.imageurl);
+                            if (Utility.validImage(threads[threadIndex].threadImages[imageIndex], monitor, client)) 
+                                validImages.Add(threads[threadIndex].threadImages[imageIndex].imageurl);
                         }
                     }
                     if (validImages.Count() >= 10) break;
@@ -215,13 +285,24 @@ namespace AutoPape
                 if(validImages.Count() > 0)
                 {
                     Random rand = new Random();
-                    string imageUrl = validImages.ElementAt(rand.Next(0, validImages.Count() - 1));
+                    string imageUrl = validImages.ElementAt(rand.Next(0, validImages.Count()));
                     //monitor.Image = System.Drawing.Image.FromFile(image);
-                    monitor.Image = Utility.controlToDrawingImage(Utility.imageFromURL(imageUrl, client, false));
+                    System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                    {
+                        monitor.Image = type != catalogType.saved ?
+                        Utility.controlToDrawingImage(Utility.imageFromURL(imageUrl, client, false)) :
+                        Utility.controlToDrawingImage(Utility.imageFromDisk(imageUrl));
+                    });
                 }
 
             }
             manager.wallpaperManager.buildWallpaper();
+            mutex.ReleaseMutex();
+        }
+
+        public async void setWallpaperAsync()
+        {
+            await Task.Run(() => setWallpaper());
         }
         
     }

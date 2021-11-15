@@ -12,6 +12,8 @@ using Image = System.Windows.Controls.Image;
 using BitmapImage = System.Windows.Media.Imaging.BitmapImage;
 using System.Windows.Media.Imaging;
 using System.Text.RegularExpressions;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
 
 namespace AutoPape
 {
@@ -35,6 +37,12 @@ namespace AutoPape
             Regex rxHTMLElement = new Regex("\\<.*?\\>");
             var elements = rxHTMLElement.Matches(clean);
 
+            clean = cleanHTMLString(clean);
+            foreach(var match in elements)
+            {
+                clean = clean.Replace(match.ToString(), "\n");
+            }
+            clean = clean.Trim('\n');
             return clean;
         }
         public static string cleanHTMLString(string toClean)
@@ -212,7 +220,7 @@ namespace AutoPape
 
             return ms;
         }
-
+        //Should be writen for a bit safer saved thread check
         public static bool validImage(ThreadImage image, MonitorSetting settings, HttpClient client)
         {
             //This can be re-writen as a series of &= operations on valid
@@ -232,8 +240,11 @@ namespace AutoPape
                         "https://" + image.imageurl,
                         client,
                         image.imageurl == null);
-                image.width = ((BitmapImage)full.Source).PixelWidth;
-                image.height = ((BitmapImage)full.Source).PixelHeight;
+                System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                {
+                    image.width = ((BitmapImage)full.Source).PixelWidth;
+                    image.height = ((BitmapImage)full.Source).PixelHeight;
+                });
             }
             if (!(image.resolution >= settings.minimumResolution)) valid = false; 
             return valid;
@@ -249,12 +260,24 @@ namespace AutoPape
                     int indexB;
                     do
                     {
-                        indexB = rand.Next(0, list.Count() - 1);
-                    } while (indexB != indexA);
+                        indexB = rand.Next(0, list.Count());
+                    } while (indexB == indexA && list.Count() > 1);
                     var temp = list[indexA];
                     list[indexA] = list[indexB];
                     list[indexB] = temp;
                 }
+            }
+        }
+
+        public static T DeepCopy<T>(T other)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                BinaryFormatter formatter = new BinaryFormatter();
+                formatter.Context = new StreamingContext(StreamingContextStates.Clone);
+                formatter.Serialize(ms, other);
+                ms.Position = 0;
+                return (T)formatter.Deserialize(ms);
             }
         }
 

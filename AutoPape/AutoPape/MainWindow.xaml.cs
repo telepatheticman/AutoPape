@@ -122,9 +122,9 @@ namespace AutoPape
                 saveClicked();
             };
             threadPanelManager = new ThreadPanelManager(ThreadProgress, SaveButton, threadPanel);
-            catalogWG = new Catalog("wg", catalogPanelWG, threadPanelManager, manager, false);
-            catalogWGDisk = new Catalog("wg", catalogPanelWGSaved, threadPanelManager, manager, true);
-            CatalogManager caManager = new CatalogManager();
+            catalogWG = new Catalog("wg", catalogPanelWG, threadPanelManager, manager, catalogType.current);
+            catalogWGDisk = new Catalog("wg", catalogPanelWGSaved, threadPanelManager, manager, catalogType.saved);
+            CatalogManager caManager = new CatalogManager(manager);
             caManager.add(catalogWG);
             caManager.add(catalogWGDisk);
             caManager.buildAllAsync();

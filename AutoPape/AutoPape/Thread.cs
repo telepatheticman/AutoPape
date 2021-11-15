@@ -99,6 +99,8 @@ namespace AutoPape
         [XmlIgnore]
         Regex rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/wg\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
         [XmlIgnore]
+        Regex rxBlock;
+        [XmlIgnore]
         string extentions = "jpg|png|jpeg";
         [XmlIgnore]
         Regex rxNames = new Regex("[0-9]+");
@@ -130,7 +132,8 @@ namespace AutoPape
             this.threadPanel = threadPanel;
             threadImages = new List<ThreadImage>();
             client = new HttpClient();
-            rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/"+board+ @"\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
+            rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/"+board+@"\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
+            rxBlock = new Regex(@"\<blockquote.*?\<\/blockquote\>");
         }
 
         private void buildThreadImageInfo()
@@ -156,13 +159,25 @@ namespace AutoPape
             await Task.Run(() => buildThreadImageInfo());
         }
 
-        public void buildThreadFromWeb()
+        public void buildThreadFromWeb(bool needsTeaserImage = false)
         {
             fromDisk = false;
             var task = client.GetStringAsync(url);
             string result = task.GetAwaiter().GetResult();
+            var Blocks = rxBlock.Matches(result);
+            foreach(var badBlock in Blocks)
+            {
+                var imageLinks = rxImages.Matches(badBlock.ToString());
+                var replaceString = badBlock.ToString();
+                foreach(var link in imageLinks)
+                {
+                    replaceString = replaceString.Replace(link.ToString(), "[REMOVED LINK]");
+                }
+                result = result.Replace(badBlock.ToString(), replaceString);
+            }    
             var images = rxImages.Matches(result);
             int imageNum = 0;
+            bool firstThumb = true;
             bool skipped = false;
 
             foreach (Match match in images)
@@ -194,6 +209,12 @@ namespace AutoPape
                         continue;
                     }
                     threadImages.Last().thumburl = match.Value;
+                    if(firstThumb && needsTeaserImage)
+                    {
+                        teaserThumb =
+                            Utility.imageFromURL(match.Value, client, false);
+                        firstThumb = false;
+                    }
                 }
             }
             //buildThreadImageInfo();
@@ -225,6 +246,8 @@ namespace AutoPape
             this.sub = from.sub;
             this.teaser = from.teaser;
             this.threadImages = from.threadImages;
+            this.rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/" + board + @"\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
+            this.rxBlock = new Regex(@"\<blockquote.*?\<\/blockquote\>");
             int i = 0;
             foreach(var threadImage in this.threadImages)
             {
@@ -238,6 +261,7 @@ namespace AutoPape
                         i++;
                     }
                     threadImage.imageurl = Utility.pathToImage(board, threadId, threadImage.imagename, imageType.fullImage);
+                    threadImage.thumburl = Utility.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail);
                 });
             }
         }
@@ -251,7 +275,7 @@ namespace AutoPape
                 {
                     System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                     {
-                        thumbs[i].Source = new BitmapImage(new Uri(Utility.pathToImage(board, threadId, threadImages[i].imagename, imageType.thumbnail)));
+                        thumbs[i].Source = new BitmapImage(new Uri(threadImages[i].thumburl));
                     });
                 }
                 else
