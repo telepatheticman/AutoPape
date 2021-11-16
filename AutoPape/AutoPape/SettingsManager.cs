@@ -85,7 +85,8 @@ namespace AutoPape
 
             foreach (var keyword in blackList.keyWords)
             {
-                if (check.sub.ToLower().Contains(keyword) || check.teaser.ToLower().Contains(keyword))
+                if (check.sub.ToLower().Contains(keyword.ToLower()) ||
+                    check.teaser.ToLower().Contains(keyword.ToLower()))
                 {
                     valid = false;
                     break;
