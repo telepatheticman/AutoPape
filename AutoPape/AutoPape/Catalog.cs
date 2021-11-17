@@ -105,35 +105,39 @@ namespace AutoPape
             if (thread.threadImages.Count() == 0) return;
             System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
             {
-                Button Item = new Button();
-                StackPanel content = new StackPanel();
-                content.VerticalAlignment = VerticalAlignment.Top;
-                Item.VerticalContentAlignment = VerticalAlignment.Top;
-                Item.Content = content;
-                Item.Width = 200;
-                Item.Height = Double.NaN;
-                Item.Margin = new Thickness(10);
+
                 string ID = thread.threadId;
                 string imageNum = thread.threadImages.Count().ToString();
                 string subject = thread.sub;
                 string tease = thread.teaser;
-                Item.Click += (o, e) => setThread(thread);
+                thread.threadButton.setClick((o, e) => setThread(thread));
                 if (!thread.fromDisk) thread.buildThreadImageInfoAsync();
 
-                content.Children.Add(thread.teaserThumb);
+                thread.threadButton.threadImage = thread.teaserThumb;
 
-                TextBlock block = new TextBlock();
-                block.TextWrapping = TextWrapping.Wrap;
+                thread.threadButton.addTextLine("Thread: " + ID);
+                thread.threadButton.addTextLine("Images: " + imageNum);
+                thread.threadButton.addTextLine(subject.Length > 200 ? subject.Substring(0, 200) + "..." : subject);
+                thread.threadButton.addTextLine(tease.Length > 500 ? tease.Substring(0, 500) + "..." : tease);
 
-                block.Text = "Thread: " + ID;
-                block.Text += "\n";
-                block.Text += "Images: " + imageNum;
-                block.Text += "\n";
-                block.Text += subject.Length > 200 ? subject.Substring(0, 200) + "..." : subject;
-                block.Text += "\n";
-                block.Text += tease.Length > 500 ? tease.Substring(0, 500) + "..." : tease;
-                content.Children.Add(block);
-                wrapPanel.Children.Add(Item);
+                //thread.threadButton.threadImage = thread.teaserThumb;
+                //Item.Click += (o, e) => setThread(thread);
+                if (!thread.fromDisk) thread.buildThreadImageInfoAsync();
+
+                //content.Children.Add(thread.teaserThumb);
+                //
+                //TextBlock block = new TextBlock();
+                //block.TextWrapping = TextWrapping.Wrap;
+                //
+                //block.Text = "Thread: " + ID;
+                //block.Text += "\n";
+                //block.Text += "Images: " + imageNum;
+                //block.Text += "\n";
+                //block.Text += subject.Length > 200 ? subject.Substring(0, 200) + "..." : subject;
+                //block.Text += "\n";
+                //block.Text += tease.Length > 500 ? tease.Substring(0, 500) + "..." : tease;
+                //content.Children.Add(block);
+                wrapPanel.Children.Add(thread.threadButton.button);
 
             });
         }
@@ -260,33 +264,25 @@ namespace AutoPape
             if (!mutex.WaitOne(300000)) return;
             foreach (var monitor in manager.wallpaperManager.monitorSettings)
             {
-                //TODO: Shuffle a seperate list
-                List<string> validImages = new List<string>();
-                //List<Thread> threadsCopy = new List<Thread>();
-                //threadsCopy = Utility.DeepCopy(threads);
+                string imageUrl = "";
                 List<int> threadIndexList = Enumerable.Range(0, threads.Count()).ToList();
                 threadIndexList.Shuffle();
-                //threads.Shuffle();
                 foreach(int threadIndex in threadIndexList)
                 {
-                    //threads[threadIndex].threadImages.Shuffle();
                     List<int> imageIndexList = Enumerable.Range(0, threads[threadIndex].threadImages.Count()).ToList();
                     imageIndexList.Shuffle();
                     if(manager.validThread(threads[threadIndex]))
                     {
                         foreach(int imageIndex in imageIndexList)
                         {
-                            if (Utility.validImage(threads[threadIndex].threadImages[imageIndex], monitor, client)) 
-                                validImages.Add(threads[threadIndex].threadImages[imageIndex].imageurl);
+                            if (Utility.validImage(threads[threadIndex].threadImages[imageIndex], monitor, client))
+                                imageUrl = threads[threadIndex].threadImages[imageIndex].imageurl;
                         }
                     }
-                    if (validImages.Count() >= 10) break;
+                    if (!string.IsNullOrEmpty(imageUrl)) break;
                 }
-                if(validImages.Count() > 0)
+                if(!string.IsNullOrEmpty(imageUrl))
                 {
-                    Random rand = new Random();
-                    string imageUrl = validImages.ElementAt(rand.Next(0, validImages.Count()));
-                    //monitor.Image = System.Drawing.Image.FromFile(image);
                     System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                     {
                         monitor.Image = type != catalogType.saved ?

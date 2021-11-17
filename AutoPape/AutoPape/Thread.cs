@@ -112,6 +112,8 @@ namespace AutoPape
         public List<ThreadImage> threadImages;
         [XmlIgnore]
         public bool fromDisk;
+        [XmlIgnore]
+        public ThreadButton threadButton;
 
         public Thread()
         {
@@ -120,6 +122,7 @@ namespace AutoPape
             url = "";
             client = new HttpClient();
             threadImages = new List<ThreadImage>();
+            threadButton = new ThreadButton();
         }
 
         public Thread(string board, string threadId, ThreadPanelManager threadPanel, string sub, string teaser)
@@ -134,6 +137,7 @@ namespace AutoPape
             client = new HttpClient();
             rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/"+board+@"\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
             rxBlock = new Regex(@"\<blockquote.*?\<\/blockquote\>");
+            threadButton = new ThreadButton();
         }
 
         private void buildThreadImageInfo()
@@ -307,6 +311,8 @@ namespace AutoPape
 
         public void saveThread()
         {
+            //TODO: Mutex this so ti is safe from refresh
+            //Or build a safer refresh
             if (fromDisk) return;
             if (!threadPanel.startProc(threadImages.Count(), false)) return;
 
