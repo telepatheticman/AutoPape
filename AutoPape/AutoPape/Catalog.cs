@@ -95,51 +95,9 @@ namespace AutoPape
 
         public void clear()
         {
+            //TODO: Make this thread safe
             threads = new List<Thread>();
             activeThread = null;
-        }
-
-        void buildItem(Thread thread, bool needsTeaserThumb = false)
-        {
-            if (!thread.fromDisk) thread.buildThreadFromWeb(needsTeaserThumb);
-            if (thread.threadImages.Count() == 0) return;
-            System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
-            {
-
-                string ID = thread.threadId;
-                string imageNum = thread.threadImages.Count().ToString();
-                string subject = thread.sub;
-                string tease = thread.teaser;
-                thread.threadButton.setClick((o, e) => setThread(thread));
-                if (!thread.fromDisk) thread.buildThreadImageInfoAsync();
-
-                thread.threadButton.threadImage = thread.teaserThumb;
-
-                thread.threadButton.addTextLine("Thread: " + ID);
-                thread.threadButton.addTextLine("Images: " + imageNum);
-                thread.threadButton.addTextLine(subject.Length > 200 ? subject.Substring(0, 200) + "..." : subject);
-                thread.threadButton.addTextLine(tease.Length > 500 ? tease.Substring(0, 500) + "..." : tease);
-
-                //thread.threadButton.threadImage = thread.teaserThumb;
-                //Item.Click += (o, e) => setThread(thread);
-                if (!thread.fromDisk) thread.buildThreadImageInfoAsync();
-
-                //content.Children.Add(thread.teaserThumb);
-                //
-                //TextBlock block = new TextBlock();
-                //block.TextWrapping = TextWrapping.Wrap;
-                //
-                //block.Text = "Thread: " + ID;
-                //block.Text += "\n";
-                //block.Text += "Images: " + imageNum;
-                //block.Text += "\n";
-                //block.Text += subject.Length > 200 ? subject.Substring(0, 200) + "..." : subject;
-                //block.Text += "\n";
-                //block.Text += tease.Length > 500 ? tease.Substring(0, 500) + "..." : tease;
-                //content.Children.Add(block);
-                wrapPanel.Children.Add(thread.threadButton.button);
-
-            });
         }
 
         public void buildFromDisk()
@@ -151,7 +109,12 @@ namespace AutoPape
                 threads.Add(new Thread());
                 threads.Last().buildThreadFromDisk(board, directory.Name);
                 threads.Last().threadPanel = threadPanel;
-                buildItem(threads.Last());
+                System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                {
+                    var currentThread = threads.Last();
+                    threads.Last().threadButton.setClick((o, e) => setThread(currentThread));
+                    wrapPanel.Children.Add(threads.Last().threadButton.button);
+                });
             }
             mutex.ReleaseMutex();
         }
@@ -180,7 +143,7 @@ namespace AutoPape
             }
         }
 
-        void buildCatalogInfo()
+        void buildFromWeb()
         {
             if (!mutex.WaitOne(300000)) return;
             var task = client.GetStringAsync(url);
@@ -207,8 +170,14 @@ namespace AutoPape
                         client,
                         catalogThread.imgurl == "deleted");
                 //threads.Last().buildThreadImageInfoAsync();
-
-                buildItem(threads.Last());
+                threads.Last().buildThreadFromWebAsync();
+                System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                {
+                    var currentThread = threads.Last();
+                    threads.Last().threadButton.setClick((o, e) => setThread(currentThread));
+                    wrapPanel.Children.Add(threads.Last().threadButton.button);
+                });
+                //buildItem(threads.Last());
             }
             //buildFromDisk();
             mutex.ReleaseMutex();
@@ -219,7 +188,7 @@ namespace AutoPape
             switch(type)
             {
                 case catalogType.current:
-                    await Task.Run(() => buildCatalogInfo());
+                    await Task.Run(() => buildFromWeb());
                     break;
                 case catalogType.archive:
                     await Task.Run(() => buildArchive());
@@ -238,7 +207,7 @@ namespace AutoPape
             switch (type)
             {
                 case catalogType.current:
-                    buildCatalogInfo();
+                    buildFromWeb();
                     break;
                 case catalogType.archive:
                     buildArchive();
@@ -269,6 +238,7 @@ namespace AutoPape
                 threadIndexList.Shuffle();
                 foreach(int threadIndex in threadIndexList)
                 {
+                    threads[threadIndex].Lock();
                     List<int> imageIndexList = Enumerable.Range(0, threads[threadIndex].threadImages.Count()).ToList();
                     imageIndexList.Shuffle();
                     if(manager.validThread(threads[threadIndex]))
@@ -279,7 +249,12 @@ namespace AutoPape
                                 imageUrl = threads[threadIndex].threadImages[imageIndex].imageurl;
                         }
                     }
-                    if (!string.IsNullOrEmpty(imageUrl)) break;
+                    if (!string.IsNullOrEmpty(imageUrl))
+                    {
+                        threads[threadIndex].Unlock();
+                        break;
+                    }
+                    threads[threadIndex].Unlock();
                 }
                 if(!string.IsNullOrEmpty(imageUrl))
                 {

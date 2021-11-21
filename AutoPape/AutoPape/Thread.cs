@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -114,6 +115,8 @@ namespace AutoPape
         public bool fromDisk;
         [XmlIgnore]
         public ThreadButton threadButton;
+        [XmlIgnore]
+        private Mutex mutex;
 
         public Thread()
         {
@@ -123,6 +126,7 @@ namespace AutoPape
             client = new HttpClient();
             threadImages = new List<ThreadImage>();
             threadButton = new ThreadButton();
+            mutex = new Mutex();
         }
 
         public Thread(string board, string threadId, ThreadPanelManager threadPanel, string sub, string teaser)
@@ -138,10 +142,22 @@ namespace AutoPape
             rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/"+board+@"\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
             rxBlock = new Regex(@"\<blockquote.*?\<\/blockquote\>");
             threadButton = new ThreadButton();
+            mutex = new Mutex();
+        }
+
+        public void Lock()
+        {
+            mutex.WaitOne(300000);
+        }
+
+        public void Unlock()
+        {
+            mutex.ReleaseMutex();
         }
 
         private void buildThreadImageInfo()
         {
+            Lock();
             foreach (var image in threadImages)
             {
                 Image thumb =
@@ -156,6 +172,7 @@ namespace AutoPape
                 });
 
             }
+            Unlock();
         }
 
         public async void buildThreadImageInfoAsync()
@@ -165,6 +182,7 @@ namespace AutoPape
 
         public void buildThreadFromWeb(bool needsTeaserImage = false)
         {
+            Lock();
             fromDisk = false;
             var task = client.GetStringAsync(url);
             string result = task.GetAwaiter().GetResult();
@@ -221,16 +239,19 @@ namespace AutoPape
                     }
                 }
             }
-            //buildThreadImageInfo();
+            buildThreadImageInfoAsync();
+            buildItem();
+            Unlock();
         }
 
-        public async void buildThreadFromWebAsync()
+        public async void buildThreadFromWebAsync(bool needsTeaserImage = false)
         {
-            await Task.Run(() => buildThreadFromWeb()); ;
+            await Task.Run(() => buildThreadFromWeb(needsTeaserImage)); ;
         }
 
         public void buildThreadFromDisk(string board, string thread)
         {
+            Lock();
             fromDisk = true;
             XmlSerializer xmlSerializer = new XmlSerializer(this.GetType());
             FileStream stream = new FileStream(
@@ -241,6 +262,7 @@ namespace AutoPape
             stream.Flush();
             stream.Close();
             buildThreadFromDisk(toLoad);
+            Unlock();
         }
 
         private void buildThreadFromDisk(Thread from)
@@ -299,6 +321,19 @@ namespace AutoPape
             threadPanel.endProc();
         }
 
+        private void buildItem()
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+            {
+                threadButton.addTextLine("Thread: " + threadId);
+                threadButton.addTextLine("Images: " + threadImages.Count().ToString());
+                threadButton.addTextLine(sub.Length > 200 ? sub.Substring(0, 200) + "..." : sub);
+                threadButton.addTextLine(teaser.Length > 500 ? teaser.Substring(0, 500) + "..." : teaser);
+
+                threadButton.threadImage.Source = teaserThumb.Source;
+            });
+        }
+
         public async void setThreadContentAsync()
         {
             List<Image> thumbs = new List<Image>();
@@ -313,6 +348,7 @@ namespace AutoPape
         {
             //TODO: Mutex this so ti is safe from refresh
             //Or build a safer refresh
+            Lock();
             if (fromDisk) return;
             if (!threadPanel.startProc(threadImages.Count(), false)) return;
 
@@ -361,6 +397,7 @@ namespace AutoPape
             xmlSerializer.Serialize(stream, this);
 
             threadPanel.endProc();
+            Unlock();
         }
 
         public async void saveThreadAsync()

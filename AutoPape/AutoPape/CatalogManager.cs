@@ -46,14 +46,15 @@ namespace AutoPape
             setPaper.Interval = (int)msToNextHour;
             refresh.Interval = toNextHalf;
             setPaper.Start();
-            refresh.Start();
+            //TODO: Uncomment when refresh is better
+            //refresh.Start();
             setPaperNonTick();
         }
         private void buildAll()
         {
             foreach(var catalog in catalogs)
             {
-                catalog.build();
+                catalog.buildAsync();
             }
         }
 

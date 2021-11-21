@@ -40,6 +40,13 @@ namespace AutoPape
             });
         }
 
+        public void setContent()
+        {
+            content.Children.Clear();
+            content.Children.Add(threadImage);
+            content.Children.Add(text);
+        }
+
         public void addTextLine(string toAdd)
         {
             text.Text += toAdd + "\n";
@@ -48,6 +55,11 @@ namespace AutoPape
         public void addText(string toAdd)
         {
             text.Text += toAdd;
+        }
+
+        public void clearText()
+        {
+            text.Text = "";
         }
 
         public void setClick(RoutedEventHandler handler)

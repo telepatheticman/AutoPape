@@ -131,6 +131,8 @@ namespace AutoPape
             //catalogWG.buildCatalogInfoAsync(setWallpaper);
         }
 
+        //Needs to move into manager
+        //Remove need for single board defined
         public void saveClicked()
         {
             catalogWG.activeThread.saveThreadAsync();
