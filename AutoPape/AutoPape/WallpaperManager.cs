@@ -67,6 +67,13 @@ namespace AutoPape
         }
         [XmlIgnore]
         public Image Image;
+        [XmlIgnore]
+        public string board;
+        [XmlIgnore]
+        public string thread;
+        [XmlIgnore]
+        public string imageName;
+
         public override string ToString()
         {
             return name + (primary ? "(Primary)" : "") ;

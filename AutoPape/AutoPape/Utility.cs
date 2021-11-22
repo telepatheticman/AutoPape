@@ -269,6 +269,15 @@ namespace AutoPape
             }
         }
 
+        public static string nameFromURL(string url)
+        {
+            string name = "";
+            Regex rxName = new Regex("[0-9]\\.(jpg|jpeg|png)");
+            name = rxName.Match(url).ToString();
+
+            return name;
+        }
+
         public static T DeepCopy<T>(T other)
         {
             using (MemoryStream ms = new MemoryStream())

@@ -104,17 +104,24 @@ namespace AutoPape
         {
             if (!mutex.WaitOne(300000)) return;
             System.IO.DirectoryInfo info = new DirectoryInfo(Utility.pathToBoardDirectory(board));
-            foreach(var directory in info.GetDirectories())
+            try
             {
-                threads.Add(new Thread());
-                threads.Last().buildThreadFromDisk(board, directory.Name);
-                threads.Last().threadPanel = threadPanel;
-                System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                foreach (var directory in info.GetDirectories())
                 {
-                    var currentThread = threads.Last();
-                    threads.Last().threadButton.setClick((o, e) => setThread(currentThread));
-                    wrapPanel.Children.Add(threads.Last().threadButton.button);
-                });
+                    threads.Add(new Thread());
+                    threads.Last().buildThreadFromDisk(board, directory.Name);
+                    threads.Last().threadPanel = threadPanel;
+                    System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                    {
+                        var currentThread = threads.Last();
+                        threads.Last().threadButton.setClick((o, e) => setThread(currentThread));
+                        wrapPanel.Children.Add(threads.Last().threadButton.button);
+                    });
+                }
+            }
+            catch(Exception ex)
+            {
+
             }
             mutex.ReleaseMutex();
         }
@@ -236,6 +243,7 @@ namespace AutoPape
                 string imageUrl = "";
                 List<int> threadIndexList = Enumerable.Range(0, threads.Count()).ToList();
                 threadIndexList.Shuffle();
+                string threadUsed = "";
                 foreach(int threadIndex in threadIndexList)
                 {
                     threads[threadIndex].Lock();
@@ -251,6 +259,7 @@ namespace AutoPape
                     }
                     if (!string.IsNullOrEmpty(imageUrl))
                     {
+                        threadUsed = threads[threadIndex].threadId;
                         threads[threadIndex].Unlock();
                         break;
                     }
@@ -263,6 +272,9 @@ namespace AutoPape
                         monitor.Image = type != catalogType.saved ?
                         Utility.controlToDrawingImage(Utility.imageFromURL(imageUrl, client, false)) :
                         Utility.controlToDrawingImage(Utility.imageFromDisk(imageUrl));
+                        monitor.board = board;
+                        monitor.thread = threadUsed;
+                        monitor.imageName = Utility.nameFromURL(imageUrl);
                     });
                 }
 

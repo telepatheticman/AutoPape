@@ -42,32 +42,39 @@
                 <StackPanel Height="Auto" Width="Auto" Name="threadPanel"/>
             </ScrollViewer>
         </Grid>
-        <StackPanel Width="270" >
-            <TextBlock Text="Monitor: "/>
-            <ComboBox Width="120" Name="MonitorBox"/>
-            <TextBlock TextWrapping="Wrap" Text="Orientation: " Name="orientationInfo"/>
-            <CheckBox Content="Allow opposite orientation" Name="allowOpposite"/>
-            <TextBlock TextWrapping="Wrap" Text="Resolution: " Name="resolutionInfo"/>
-            <TextBlock TextWrapping="Wrap" Text="Minimum Resolution (pixels):"/>
-            <TextBox Width="120" PreviewTextInput="textBoxLimit" Name="MinRsolution"/>
-            <TextBlock TextWrapping="Wrap" Text="Aspect Ratio: "/>
-            <CheckBox Content="Allow narrower papers" Name="AllowNarrow"/>
-            <TextBlock TextWrapping="Wrap" Text="Narrower paper mode: "/>
-            <ComboBox Width="120" Name="narrowMode"/>
-            <CheckBox Content="Allow wider papers" Name="AllowWide"/>
-            <TextBlock TextWrapping="Wrap" Text="Wider paper mode: "/>
-            <ComboBox Width="120" Name="wideMode"/>
-            <Button Content="Apply" Click="applySettings" Name="Apply"/>
-            <!--<TextBlock TextWrapping="Wrap" Text="Narrower wallpapers have a lower bound of 1:1 when the "/>-->
-        </StackPanel>
-        <StackPanel Width="270">
-            <TextBlock Text="Blacklist: "/>
-            <TextBox Width="120" Name="BlackListText"/>
-            <Button Height="25" Content="add" Name="BlackListAdd"/>
-            <ScrollViewer Height="100" VerticalScrollBarVisibility="Auto">
-                <WrapPanel Height="Auto" Width="270" Name="BlackList"/>
-            </ScrollViewer>
-        </StackPanel>
+        <TabControl>
+            <TabItem Header="Monitor Settings">
+                <StackPanel Width="270" >
+                    <TextBlock Text="Monitor: "/>
+                    <ComboBox Width="120" Name="MonitorBox"/>
+                    <TextBlock TextWrapping="Wrap" Text="Orientation: " Name="orientationInfo"/>
+                    <CheckBox Content="Allow opposite orientation" Name="allowOpposite"/>
+                    <TextBlock TextWrapping="Wrap" Text="Resolution: " Name="resolutionInfo"/>
+                    <TextBlock TextWrapping="Wrap" Text="Minimum Resolution (pixels):"/>
+                    <TextBox Width="120" PreviewTextInput="textBoxLimit" Name="MinRsolution"/>
+                    <TextBlock TextWrapping="Wrap" Text="Aspect Ratio: "/>
+                    <CheckBox Content="Allow narrower papers" Name="AllowNarrow"/>
+                    <TextBlock TextWrapping="Wrap" Text="Narrower paper mode: "/>
+                    <ComboBox Width="120" Name="narrowMode"/>
+                    <CheckBox Content="Allow wider papers" Name="AllowWide"/>
+                    <TextBlock TextWrapping="Wrap" Text="Wider paper mode: "/>
+                    <ComboBox Width="120" Name="wideMode"/>
+                    <Button Content="Apply" Click="applySettings" Name="Apply"/>
+                    <TextBlock Width="200" Name="CurrentImage"/>
+                    <!--<TextBlock TextWrapping="Wrap" Text="Narrower wallpapers have a lower bound of 1:1 when the "/>-->
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Blacklist">
+                <StackPanel Width="270">
+                    <TextBlock Text="Blacklist: "/>
+                    <TextBox Width="120" Name="BlackListText"/>
+                    <Button Height="25" Content="add" Name="BlackListAdd"/>
+                    <ScrollViewer Height="100" VerticalScrollBarVisibility="Auto">
+                        <WrapPanel Height="Auto" Width="270" Name="BlackList"/>
+                    </ScrollViewer>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
     </StackPanel>
 
 </Window>

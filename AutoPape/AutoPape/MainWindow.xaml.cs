@@ -35,6 +35,8 @@ namespace AutoPape
         ThreadPanelManager threadPanelManager;
         Catalog catalogWG;
         Catalog catalogWGDisk;
+        Catalog catalogW;
+        Catalog catalogWDisk;
 
         private void textBoxLimit(object sender, TextCompositionEventArgs e)
         {
@@ -68,6 +70,7 @@ namespace AutoPape
             wideMode.Items.Add(fit.Fill);
             wideMode.SelectedItem = monitor.wideOption;
             AllowWide.IsChecked = monitor.allowWider;
+            CurrentImage.Text = monitor.board + "/" + monitor.thread + "/" + monitor.imageName;
         }
 
         private void getMonitorSettingInfo(MonitorSetting monitor)
@@ -124,9 +127,13 @@ namespace AutoPape
             threadPanelManager = new ThreadPanelManager(ThreadProgress, SaveButton, threadPanel);
             catalogWG = new Catalog("wg", catalogPanelWG, threadPanelManager, manager, catalogType.current);
             catalogWGDisk = new Catalog("wg", catalogPanelWGSaved, threadPanelManager, manager, catalogType.saved);
+            catalogW = new Catalog("w", catalogPanelW, threadPanelManager, manager, catalogType.current);
+            catalogWDisk = new Catalog("w", catalogPanelWSaved, threadPanelManager, manager, catalogType.saved);
             CatalogManager caManager = new CatalogManager(manager);
             caManager.add(catalogWG);
             caManager.add(catalogWGDisk);
+            //caManager.add(catalogW);
+            //caManager.add(catalogWDisk);
             caManager.buildAllAsync();
             //catalogWG.buildCatalogInfoAsync(setWallpaper);
         }
@@ -136,6 +143,10 @@ namespace AutoPape
         public void saveClicked()
         {
             catalogWG.activeThread.saveThreadAsync();
+            //foreach(var thread in catalogWGDisk.threads)
+            //{
+            //    thread.refreshAsync();
+            //}
         }
 
         public void addBlackListItem(SettingsManager settings, string toAdd, bool fromList = false)

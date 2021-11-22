@@ -76,7 +76,11 @@ namespace AutoPape
         private void setPaperNonTick()
         {
             Random rand = new Random();
-            int toUse = rand.Next(0, catalogs.Count());
+            int toUse = 0;
+            do
+            {
+                toUse = rand.Next(0, catalogs.Count());
+            } while (catalogs[toUse].threads.Count() > 0);
             catalogs[toUse].setWallpaperAsync();
         }
 

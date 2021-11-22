@@ -262,6 +262,7 @@ namespace AutoPape
             stream.Flush();
             stream.Close();
             buildThreadFromDisk(toLoad);
+            buildItem();
             Unlock();
         }
 
@@ -290,6 +291,20 @@ namespace AutoPape
                     threadImage.thumburl = Utility.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail);
                 });
             }
+        }
+
+        public void refresh()
+        {
+            if(fromDisk)
+            {
+                threadImages.Clear();
+                buildThreadFromDisk(board, threadId);
+            }
+        }
+
+        public async void refreshAsync()
+        {
+            await Task.Run(() => refresh());
         }
 
         public void setThreadContent(List<Image> thumbs)
@@ -325,6 +340,7 @@ namespace AutoPape
         {
             System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
             {
+                threadButton.clearText();
                 threadButton.addTextLine("Thread: " + threadId);
                 threadButton.addTextLine("Images: " + threadImages.Count().ToString());
                 threadButton.addTextLine(sub.Length > 200 ? sub.Substring(0, 200) + "..." : sub);
@@ -341,7 +357,7 @@ namespace AutoPape
             {
                 thumbs.Add(new Image());
             }
-            await Task.Run(() => setThreadContent(thumbs));
+            if (thumbs.Count() > 0) await Task.Run(() => setThreadContent(thumbs));
         }
 
         public void saveThread()
