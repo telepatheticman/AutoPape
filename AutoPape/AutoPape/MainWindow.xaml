@@ -75,6 +75,7 @@
                 </StackPanel>
             </TabItem>
         </TabControl>
+        <Button Content="Refresh Wallpaper" Width="75" Name="ReRoll"/>
     </StackPanel>
 
 </Window>

@@ -15,7 +15,7 @@ namespace AutoPape
 
         int images;
         bool isProcessing;
-        bool activeThread;
+        public Thread activeThread;
 
         public ThreadPanelManager(ProgressBar progress, Button button, StackPanel panel)
         {
@@ -25,7 +25,7 @@ namespace AutoPape
 
             images = 0;
             isProcessing = false;
-            activeThread = false;
+            activeThread = null;
             saveButton.IsEnabled = false;
         }
 

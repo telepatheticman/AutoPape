@@ -235,16 +235,29 @@ namespace AutoPape
             //threadInfo.saveThread();
         }
 
+        private List<Tuple<Thread, ThreadImage>> ToTupleList()
+        {
+            List<Tuple<Thread, ThreadImage>> tuple = new List<Tuple<Thread, ThreadImage>>();
+            foreach(var thread in threads)
+            {
+                thread.Lock();
+                tuple.AddRange(thread.ToTupleList());
+                thread.Unlock();
+            }
+            return tuple;
+        }
+
         public void setWallpaper()
         {
             if (!mutex.WaitOne(300000)) return;
+            List<Tuple<Thread, ThreadImage>> tuple = ToTupleList();
+            tuple.Shuffle();
             foreach (var monitor in manager.wallpaperManager.monitorSettings)
             {
                 string imageUrl = "";
-                List<int> threadIndexList = Enumerable.Range(0, threads.Count()).ToList();
-                threadIndexList.Shuffle();
+                //List<int> threadIndexList = Enumerable.Range(0, threads.Count()).ToList();
                 string threadUsed = "";
-                foreach(int threadIndex in threadIndexList)
+                /*foreach(int threadIndex in threadIndexList)
                 {
                     threads[threadIndex].Lock();
                     List<int> imageIndexList = Enumerable.Range(0, threads[threadIndex].threadImages.Count()).ToList();
@@ -264,6 +277,18 @@ namespace AutoPape
                         break;
                     }
                     threads[threadIndex].Unlock();
+                }*/
+                foreach(var pair in tuple)
+                {
+                    if(manager.validThread(pair.Item1))
+                    {
+                        if (Utility.validImage(pair.Item2, monitor, client))
+                        {
+                            imageUrl = pair.Item2.imageurl;
+                            threadUsed = pair.Item1.threadId;
+                            break;
+                        }
+                    }
                 }
                 if(!string.IsNullOrEmpty(imageUrl))
                 {
@@ -277,7 +302,6 @@ namespace AutoPape
                         monitor.imageName = Utility.nameFromURL(imageUrl);
                     });
                 }
-
             }
             manager.wallpaperManager.buildWallpaper();
             mutex.ReleaseMutex();

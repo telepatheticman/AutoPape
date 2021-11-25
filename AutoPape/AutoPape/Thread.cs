@@ -310,6 +310,7 @@ namespace AutoPape
         public void setThreadContent(List<Image> thumbs)
         {
             if (!threadPanel.startProc(threadImages.Count())) return;
+            threadPanel.activeThread = this;
             for(int i = 0; i < threadImages.Count(); i++)
             {
                 if (fromDisk)
@@ -398,6 +399,15 @@ namespace AutoPape
                         thread.thumburl == null);
                     saveImage(thumbDirecotry, thread.imagename, thumbToSave);
                 }
+                else if(thread.imagename != null)
+                {
+                    Image full = Utility.imageFromDisk(Utility.pathToImage(board, threadId, thread.imagename, imageType.fullImage));
+                    System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                    {
+                        thread.width = ((BitmapImage)full.Source).PixelWidth;
+                        thread.height = ((BitmapImage)full.Source).PixelHeight;
+                    });
+                }
                 threadPanel.Add(image);
                 image++;
             }
@@ -411,7 +421,8 @@ namespace AutoPape
                 FileMode.Create
                 );
             xmlSerializer.Serialize(stream, this);
-
+            stream.Flush();
+            stream.Close();
             threadPanel.endProc();
             Unlock();
         }
@@ -438,6 +449,16 @@ namespace AutoPape
                     stream.Close();
                 }
             });
+        }
+
+        public List<Tuple<Thread, ThreadImage>> ToTupleList()
+        {
+            List<Tuple<Thread, ThreadImage>> tuple = new List<Tuple<Thread, ThreadImage>>();
+            foreach(var image in threadImages)
+            {
+                tuple.Add(new Tuple<Thread, ThreadImage>(this, image));
+            }
+            return tuple;
         }
     }
 }

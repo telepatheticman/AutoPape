@@ -45,10 +45,10 @@ namespace AutoPape
             if (msToNextHour <= 300000) msToNextHour += 3600000;
             setPaper.Interval = (int)msToNextHour;
             refresh.Interval = toNextHalf;
-            setPaper.Start();
+            //setPaper.Start();
             //TODO: Uncomment when refresh is better
             //refresh.Start();
-            setPaperNonTick();
+            //setPaperNonTick();
         }
         private void buildAll()
         {

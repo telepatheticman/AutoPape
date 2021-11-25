@@ -124,6 +124,11 @@ namespace AutoPape
             {
                 saveClicked();
             };
+
+            ReRoll.Click += (o, e) =>
+            {
+                catalogWGDisk.setWallpaperAsync();
+            };
             threadPanelManager = new ThreadPanelManager(ThreadProgress, SaveButton, threadPanel);
             catalogWG = new Catalog("wg", catalogPanelWG, threadPanelManager, manager, catalogType.current);
             catalogWGDisk = new Catalog("wg", catalogPanelWGSaved, threadPanelManager, manager, catalogType.saved);
@@ -143,10 +148,10 @@ namespace AutoPape
         public void saveClicked()
         {
             catalogWG.activeThread.saveThreadAsync();
-            //foreach(var thread in catalogWGDisk.threads)
-            //{
-            //    thread.refreshAsync();
-            //}
+            foreach(var thread in catalogWGDisk.threads)
+            {
+                thread.refreshAsync();
+            }
         }
 
         public void addBlackListItem(SettingsManager settings, string toAdd, bool fromList = false)
