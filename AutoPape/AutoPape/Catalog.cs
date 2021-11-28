@@ -100,6 +100,58 @@ namespace AutoPape
             activeThread = null;
         }
 
+        public void refreshFromDisk()
+        {
+            if (!mutex.WaitOne(300000)) return;
+
+            foreach(var thread in threads)
+            {
+                try
+                {
+                    thread.refresh();
+                }
+                catch(Exception ex)
+                {
+                    wrapPanel.Children.Remove(thread.threadButton.button);
+                }
+            }
+
+            System.IO.DirectoryInfo info = new DirectoryInfo(Utility.pathToBoardDirectory(board));
+
+            try
+            {
+                foreach (var directory in info.GetDirectories())
+                {
+                    bool threadExists = false;
+                    foreach(var thread in threads)
+                    {
+                        if(thread.threadId == directory.Name)
+                        {
+                            threadExists = true;
+                            break;
+                        }
+                    }
+                    if (!threadExists)
+                    {
+                        threads.Last().buildThreadFromDisk(board, directory.Name);
+                        threads.Last().threadPanel = threadPanel;
+                        System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                        {
+                            var currentThread = threads.Last();
+                            threads.Last().threadButton.setClick((o, e) => setThread(currentThread));
+                            wrapPanel.Children.Add(threads.Last().threadButton.button);
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            mutex.ReleaseMutex();
+        }
+
         public void buildFromDisk()
         {
             if (!mutex.WaitOne(300000)) return;

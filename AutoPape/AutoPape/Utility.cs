@@ -177,7 +177,7 @@ namespace AutoPape
             System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
             {
                 image = new Image();
-                image.Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(path));
+                image.Source = new BitmapImage(new Uri(path));
             });
             return image;
         }

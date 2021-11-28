@@ -295,11 +295,14 @@ namespace AutoPape
 
         public void refresh()
         {
+            Lock();
             if(fromDisk)
             {
                 threadImages.Clear();
                 buildThreadFromDisk(board, threadId);
             }
+
+            Unlock();
         }
 
         public async void refreshAsync()
