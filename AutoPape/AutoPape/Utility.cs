@@ -151,6 +151,7 @@ namespace AutoPape
 
         public static System.Drawing.Image controlToDrawingImage(Image from)
         {
+            if(from == null) return null;
             System.Drawing.Image to = null;
 
             var ms = new MemoryStream();
@@ -159,8 +160,6 @@ namespace AutoPape
             enc.Frames.Add(BitmapFrame.Create(imageBitmap));
             enc.Save(ms);
             Bitmap image = new Bitmap(ms);
-            //Bitmap image = new Bitmap()
-            
 
             ImageConverter converter = new ImageConverter();
 
@@ -177,7 +176,14 @@ namespace AutoPape
             System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
             {
                 image = new Image();
-                image.Source = new BitmapImage(new Uri(path));
+                try
+                {
+                    image.Source = new BitmapImage(new Uri(path));
+                }
+                catch(Exception ex)
+                {
+                    image = null;
+                }
             });
             return image;
         }
@@ -240,6 +246,7 @@ namespace AutoPape
                         "https://" + image.imageurl,
                         client,
                         image.imageurl == null);
+                if (full == null) return false;
                 System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                 {
                     image.width = ((BitmapImage)full.Source).PixelWidth;
@@ -272,7 +279,7 @@ namespace AutoPape
         public static string nameFromURL(string url)
         {
             string name = "";
-            Regex rxName = new Regex("[0-9]\\.(jpg|jpeg|png)");
+            Regex rxName = new Regex("[0-9]+\\.(jpg|jpeg|png)");
             name = rxName.Match(url).ToString();
 
             return name;

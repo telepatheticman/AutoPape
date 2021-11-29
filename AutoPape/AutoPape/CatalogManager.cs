@@ -75,21 +75,21 @@ namespace AutoPape
 
         private void setPaperNonTick()
         {
-            Random rand = new Random();
+            /*Random rand = new Random();
             int toUse = 0;
             do
             {
                 toUse = rand.Next(0, catalogs.Count());
-            } while (catalogs[toUse].threads.Count() > 0);
-            catalogs[toUse].setWallpaperAsync();
+            } while (catalogs[toUse].threads.Count() > 0);*/
+            setWallpaperAsync();
         }
 
         private void setPaperTick(object sender, EventArgs e)
         {
-            Random rand = new Random();
-            int toUse = rand.Next(0, catalogs.Count());
+            //Random rand = new Random();
+            //int toUse = rand.Next(0, catalogs.Count());
             setPaper.Interval = 3600000;
-            catalogs[toUse].setWallpaperAsync();
+            setWallpaperAsync();
         }
         public void refreshTick(object sender, EventArgs e)
         {
@@ -109,6 +109,70 @@ namespace AutoPape
                 Catalog toSave = new Catalog(board, manager, catalogType.archive);
                 toSave.buildAsync();
             }
+        }
+
+        private void lockAll()
+        {
+            foreach(var catalog in catalogs)
+            {
+                catalog.Lock();
+            }
+        }
+
+        private void unlockAll()
+        {
+            foreach(var catalog in catalogs)
+            {
+                catalog.Unlock();
+            }
+        }
+
+        public void setWallaper()
+        {
+            //if (!mutex.WaitOne(300000)) return;
+            lockAll();
+            List<Tuple<Thread, ThreadImage>> tuple = new List<Tuple<Thread, ThreadImage>>();
+            foreach(var catalog in catalogs)
+            {
+                tuple.AddRange(catalog.ToTupleList());
+            }
+            tuple.Shuffle();
+            foreach (var monitor in manager.wallpaperManager.monitorSettings)
+            {
+                //string imageUrl = "";
+                //string threadUsed = "";
+
+                foreach (var pair in tuple)
+                {
+                    if (manager.validThread(pair.Item1))
+                    {
+                        if (Utility.validImage(pair.Item2, monitor, pair.Item1.client))
+                        {
+                            System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                            {
+                                System.Drawing.Image imageToUse = pair.Item1.fromDisk ?
+                                Utility.controlToDrawingImage(Utility.imageFromDisk(pair.Item2.imageurl)) :
+                                Utility.controlToDrawingImage(Utility.imageFromURL(pair.Item2.imageurl, pair.Item1.client, false));
+                                monitor.Image = imageToUse;
+                                monitor.board = pair.Item1.board;
+                                monitor.thread = pair.Item1.threadId;
+                                monitor.imageName = Utility.nameFromURL(pair.Item2.imageurl);
+                            });
+                            if (monitor.Image != null) break;
+                            //imageUrl = pair.Item2.imageurl;
+                            //threadUsed = pair.Item1.threadId;
+                        }
+                    }
+                }
+            }
+            manager.wallpaperManager.buildWallpaper();
+            //mutex.ReleaseMutex();
+            unlockAll();
+        }
+
+        public async void setWallpaperAsync()
+        {
+            await Task.Run(() => setWallaper());
         }
     }
 }

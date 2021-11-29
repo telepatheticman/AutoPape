@@ -135,8 +135,8 @@ namespace AutoPape
             catalogW = new Catalog("w", catalogPanelW, threadPanelManager, manager, catalogType.current);
             catalogWDisk = new Catalog("w", catalogPanelWSaved, threadPanelManager, manager, catalogType.saved);
             CatalogManager caManager = new CatalogManager(manager);
-            //caManager.add(catalogWG);
-            caManager.add(catalogWGDisk);
+            caManager.add(catalogWG);
+            //caManager.add(catalogWGDisk);
             //caManager.add(catalogW);
             //caManager.add(catalogWDisk);
             caManager.buildAllAsync();

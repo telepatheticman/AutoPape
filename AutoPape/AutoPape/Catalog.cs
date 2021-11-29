@@ -152,6 +152,11 @@ namespace AutoPape
             mutex.ReleaseMutex();
         }
 
+        public async void refreshFromDiskAsync()
+        {
+            await Task.Run(() => refreshFromDisk());
+        }
+
         public void buildFromDisk()
         {
             if (!mutex.WaitOne(300000)) return;
@@ -287,7 +292,7 @@ namespace AutoPape
             //threadInfo.saveThread();
         }
 
-        private List<Tuple<Thread, ThreadImage>> ToTupleList()
+        public List<Tuple<Thread, ThreadImage>> ToTupleList()
         {
             List<Tuple<Thread, ThreadImage>> tuple = new List<Tuple<Thread, ThreadImage>>();
             foreach(var thread in threads)
@@ -299,6 +304,17 @@ namespace AutoPape
             return tuple;
         }
 
+
+        public void Lock()
+        {
+            if (!mutex.WaitOne(300000)) return;
+        }
+
+        public void Unlock()
+        {
+            mutex.ReleaseMutex();
+        }
+
         public void setWallpaper()
         {
             if (!mutex.WaitOne(300000)) return;
@@ -306,53 +322,30 @@ namespace AutoPape
             tuple.Shuffle();
             foreach (var monitor in manager.wallpaperManager.monitorSettings)
             {
-                string imageUrl = "";
-                //List<int> threadIndexList = Enumerable.Range(0, threads.Count()).ToList();
-                string threadUsed = "";
-                /*foreach(int threadIndex in threadIndexList)
-                {
-                    threads[threadIndex].Lock();
-                    List<int> imageIndexList = Enumerable.Range(0, threads[threadIndex].threadImages.Count()).ToList();
-                    imageIndexList.Shuffle();
-                    if(manager.validThread(threads[threadIndex]))
-                    {
-                        foreach(int imageIndex in imageIndexList)
-                        {
-                            if (Utility.validImage(threads[threadIndex].threadImages[imageIndex], monitor, client))
-                                imageUrl = threads[threadIndex].threadImages[imageIndex].imageurl;
-                        }
-                    }
-                    if (!string.IsNullOrEmpty(imageUrl))
-                    {
-                        threadUsed = threads[threadIndex].threadId;
-                        threads[threadIndex].Unlock();
-                        break;
-                    }
-                    threads[threadIndex].Unlock();
-                }*/
+                //string imageUrl = "";
+                //string threadUsed = "";
+
                 foreach(var pair in tuple)
                 {
                     if(manager.validThread(pair.Item1))
                     {
                         if (Utility.validImage(pair.Item2, monitor, client))
                         {
-                            imageUrl = pair.Item2.imageurl;
-                            threadUsed = pair.Item1.threadId;
-                            break;
+                            System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                            {
+                                System.Drawing.Image imageToUse = pair.Item1.fromDisk ?
+                                Utility.controlToDrawingImage(Utility.imageFromDisk(pair.Item2.imageurl)) :
+                                Utility.controlToDrawingImage(Utility.imageFromURL(pair.Item2.imageurl, client, false));
+                                monitor.Image = imageToUse;
+                                monitor.board = board;
+                                monitor.thread = pair.Item1.threadId;
+                                monitor.imageName = Utility.nameFromURL(pair.Item2.imageurl);
+                            });
+                            if (monitor.Image != null) break;
+                            //imageUrl = pair.Item2.imageurl;
+                            //threadUsed = pair.Item1.threadId;
                         }
                     }
-                }
-                if(!string.IsNullOrEmpty(imageUrl))
-                {
-                    System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
-                    {
-                        monitor.Image = type != catalogType.saved ?
-                        Utility.controlToDrawingImage(Utility.imageFromURL(imageUrl, client, false)) :
-                        Utility.controlToDrawingImage(Utility.imageFromDisk(imageUrl));
-                        monitor.board = board;
-                        monitor.thread = threadUsed;
-                        monitor.imageName = Utility.nameFromURL(imageUrl);
-                    });
                 }
             }
             manager.wallpaperManager.buildWallpaper();

@@ -106,7 +106,7 @@ namespace AutoPape
         [XmlIgnore]
         Regex rxNames = new Regex("[0-9]+");
         [XmlIgnore]
-        HttpClient client = null;
+        public HttpClient client = null;
         [XmlIgnore]
         public ThreadPanelManager threadPanel = null;
         [XmlArray("ThreadImages")]
@@ -160,17 +160,19 @@ namespace AutoPape
             Lock();
             foreach (var image in threadImages)
             {
-                Image thumb =
-                    Utility.imageFromURL(
-                        "https://" + image.thumburl,
-                        client,
-                        image.thumburl == null);
-                System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                if (image.thumbWidth == 1 && image.thumbHeight == 1)
                 {
-                    image.thumbWidth = ((BitmapImage)thumb.Source).PixelWidth;
-                    image.thumbHeight = ((BitmapImage)thumb.Source).PixelHeight;
-                });
-
+                    Image thumb =
+                        Utility.imageFromURL(
+                            "https://" + image.thumburl,
+                            client,
+                            image.thumburl == null);
+                    System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                    {
+                        image.thumbWidth = ((BitmapImage)thumb.Source).PixelWidth;
+                        image.thumbHeight = ((BitmapImage)thumb.Source).PixelHeight;
+                    });
+                }
             }
             Unlock();
         }
@@ -198,47 +200,35 @@ namespace AutoPape
                 result = result.Replace(badBlock.ToString(), replaceString);
             }    
             var images = rxImages.Matches(result);
-            int imageNum = 0;
             bool firstThumb = true;
-            bool skipped = false;
 
-            foreach (Match match in images)
+            for(int i = 0; i < images.Count; i+=3)
             {
-                if (imageNum == 0)
+                bool alreadyHave = false;
+                foreach(var image in threadImages)
                 {
-                    imageNum++;
-                    if(!extentions.Contains(Utility.imageExtention(match.Value)))
+                    if(image.imageurl == images[i].Value)
                     {
-                        skipped = true;
-                        continue;
+                        firstThumb = false;
+                        alreadyHave = true;
+                        break;
                     }
+                }
+                if(!alreadyHave && extentions.Contains(Utility.imageExtention(images[i].Value)))
+                {
                     threadImages.Add(new ThreadImage());
-                    threadImages.Last().imagename = rxNames.Match(match.Value.Substring(9)).Value;
-                    continue;
-                }
-                else if (imageNum == 1)
-                {
-                    imageNum++;
-                    if (skipped) continue;
-                    threadImages.Last().imageurl = match.Value;
-                }
-                else if (imageNum == 2)
-                {
-                    imageNum = 0;
-                    if(skipped)
-                    {
-                        skipped = false;
-                        continue;
-                    }
-                    threadImages.Last().thumburl = match.Value;
-                    if(firstThumb && needsTeaserImage)
+                    threadImages.Last().imagename = rxNames.Match(images[i].Value.Substring(9)).Value;
+                    threadImages.Last().imageurl = images[i].Value;
+                    threadImages.Last().thumburl = images[i + 2].Value;
+                    if (firstThumb && needsTeaserImage)
                     {
                         teaserThumb =
-                            Utility.imageFromURL(match.Value, client, false);
+                            Utility.imageFromURL(images[i + 2].Value, client, false);
                         firstThumb = false;
                     }
                 }
             }
+
             buildThreadImageInfoAsync();
             buildItem();
             Unlock();
@@ -300,6 +290,10 @@ namespace AutoPape
             {
                 threadImages.Clear();
                 buildThreadFromDisk(board, threadId);
+            }
+            else
+            {
+
             }
 
             Unlock();
