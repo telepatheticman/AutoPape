@@ -283,10 +283,11 @@ namespace AutoPape
             }
         }
 
-        public void refresh()
+        public void refresh(Mutex refreshLock = null)
         {
             Lock();
-            if(fromDisk)
+            refreshLock?.WaitOne(300000);
+            if (fromDisk)
             {
                 threadImages.Clear();
                 buildThreadFromDisk(board, threadId);
@@ -295,13 +296,13 @@ namespace AutoPape
             {
 
             }
-
+            refreshLock?.ReleaseMutex();
             Unlock();
         }
 
-        public async void refreshAsync()
+        public async void refreshAsync(Mutex refreshLock = null)
         {
-            await Task.Run(() => refresh());
+            await Task.Run(() => refresh(refreshLock));
         }
 
         public void setThreadContent(List<Image> thumbs)
@@ -358,11 +359,12 @@ namespace AutoPape
             if (thumbs.Count() > 0) await Task.Run(() => setThreadContent(thumbs));
         }
 
-        public void saveThread()
+        public void saveThread(Mutex refreshLock = null)
         {
             //TODO: Mutex this so ti is safe from refresh
             //Or build a safer refresh
             Lock();
+            refreshLock?.WaitOne(300000);
             if (fromDisk) return;
             if (!threadPanel.startProc(threadImages.Count(), false)) return;
 
@@ -421,12 +423,13 @@ namespace AutoPape
             stream.Flush();
             stream.Close();
             threadPanel.endProc();
+            refreshLock?.ReleaseMutex();
             Unlock();
         }
 
-        public async void saveThreadAsync()
+        public async void saveThreadAsync(Mutex refreshLock = null)
         {
-            await Task.Run(() => saveThread()); ;
+            await Task.Run(() => saveThread(refreshLock));
         }
         public void saveImage(string path, string name, Image toSave)
         {

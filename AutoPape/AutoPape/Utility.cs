@@ -280,7 +280,7 @@ namespace AutoPape
         {
             string name = "";
             Regex rxName = new Regex("[0-9]+\\.(jpg|jpeg|png)");
-            name = rxName.Match(url).ToString();
+            name = rxName.Match(url).ToString().TrimEnd('.', 'j', 'p', 'e', 'n', 'g');
 
             return name;
         }

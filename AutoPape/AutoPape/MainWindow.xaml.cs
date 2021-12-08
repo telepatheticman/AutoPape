@@ -18,6 +18,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace AutoPape
 {
@@ -29,7 +30,6 @@ namespace AutoPape
     public partial class MainWindow : Window
     {
 
-        Timer setWallpaper;
         SettingsManager manager;
         WallpaperManager wallManger;
         ThreadPanelManager threadPanelManager;
@@ -87,10 +87,10 @@ namespace AutoPape
         {
             InitializeComponent();
 
-            setWallpaper = new Timer();
-            setWallpaper.Enabled = false;
-            setWallpaper.Interval = 5000;
-            setWallpaper.Tick += new EventHandler(setWallpaperTick);
+            //setWallpaper = new Timer();
+            //setWallpaper.Enabled = false;
+            //setWallpaper.Interval = 5000;
+            //setWallpaper.Tick += new EventHandler(setWallpaperTick);
 
             MonitorBox.SelectionChanged += 
                 (o, e) => 
@@ -136,7 +136,7 @@ namespace AutoPape
             catalogWDisk = new Catalog("w", catalogPanelWSaved, threadPanelManager, manager, catalogType.saved);
             CatalogManager caManager = new CatalogManager(manager);
             caManager.add(catalogWG);
-            //caManager.add(catalogWGDisk);
+            caManager.add(catalogWGDisk);
             //caManager.add(catalogW);
             //caManager.add(catalogWDisk);
             caManager.buildAllAsync();
@@ -147,10 +147,11 @@ namespace AutoPape
         //Remove need for single board defined
         public void saveClicked()
         {
-            threadPanelManager.activeThread?.saveThreadAsync();
+            Mutex refreshLock = new Mutex();
+            threadPanelManager.activeThread?.saveThreadAsync(refreshLock);
             foreach(var thread in catalogWGDisk.threads)
             {
-                thread.refreshAsync();
+                thread.refreshAsync(refreshLock);
             }
         }
 
@@ -185,11 +186,6 @@ namespace AutoPape
         {
             settings.blackList.keyWords.Remove(toRemove);
             BlackList.Children.Remove(panelRemove);
-        }
-
-        public void setWallpaperTick(object sender, EventArgs eventArgs)
-        {
-            catalogWG.setWallpaper();
         }
 
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -148,17 +149,28 @@ namespace AutoPape
                     {
                         if (Utility.validImage(pair.Item2, monitor, pair.Item1.client))
                         {
+                            System.Windows.Controls.Image controlImageToUse = null;
                             System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                             {
-                                System.Drawing.Image imageToUse = pair.Item1.fromDisk ?
-                                Utility.controlToDrawingImage(Utility.imageFromDisk(pair.Item2.imageurl)) :
-                                Utility.controlToDrawingImage(Utility.imageFromURL(pair.Item2.imageurl, pair.Item1.client, false));
+                                controlImageToUse = pair.Item1.fromDisk ?
+                                    Utility.imageFromDisk(pair.Item2.imageurl) :
+                                    Utility.imageFromURL(pair.Item2.imageurl, pair.Item1.client, false);
+                                System.Drawing.Image imageToUse = 
+                                    Utility.controlToDrawingImage(controlImageToUse);
                                 monitor.Image = imageToUse;
                                 monitor.board = pair.Item1.board;
                                 monitor.thread = pair.Item1.threadId;
                                 monitor.imageName = Utility.nameFromURL(pair.Item2.imageurl);
                             });
-                            if (monitor.Image != null) break;
+                            if (monitor.Image != null)
+                            {
+                                Directory.CreateDirectory(Path.Combine(Utility.pathToParent(), "CurrentPaper"));
+                                pair.Item1.saveImage(
+                                    Path.Combine(Utility.pathToParent(), "CurrentPaper"),
+                                    monitor.imageName,
+                                    controlImageToUse);
+                                break;
+                            }
                             //imageUrl = pair.Item2.imageurl;
                             //threadUsed = pair.Item1.threadId;
                         }
