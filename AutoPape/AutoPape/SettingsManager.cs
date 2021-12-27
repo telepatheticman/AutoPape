@@ -55,6 +55,8 @@ namespace AutoPape
         public List<string> keyWords;
         [XmlElement("Monitors")]
         public WallpaperManager wallpaperManager;
+        [XmlElement("SaveDirectory")]
+        public string saveDirectory;
         public SettingsManager(WallpaperManager wallpaperManager) : this()
         {
             this.wallpaperManager = wallpaperManager;
@@ -102,6 +104,7 @@ namespace AutoPape
                 Path.Combine(Utility.pathToParent(), "Settings.xml"), 
                 FileMode.Create);
             serializer.Serialize(stream, this);
+            stream.Close();
         }
 
         public bool loadSettings()
@@ -113,6 +116,7 @@ namespace AutoPape
                     Path.Combine(Utility.pathToParent(), "Settings.xml"),
                     FileMode.Open);
                 loaded = (SettingsManager)serializer.Deserialize(stream);
+                stream.Close();
                 loaded.wallpaperManager.refreshScreens();
             }
             catch(Exception ex)
@@ -131,6 +135,12 @@ namespace AutoPape
             blackList = loaded.blackList;
             keyWords = loaded.keyWords;
             wallpaperManager = loaded.wallpaperManager;
+            saveDirectory = loaded.saveDirectory;
+            if(string.IsNullOrEmpty(saveDirectory) || !Directory.Exists(saveDirectory))
+            {
+                saveDirectory = Utility.pathToParent();
+            }
+            saveSettings();
         }
 
         private void buildDefaults()
@@ -145,6 +155,45 @@ namespace AutoPape
             blackList.keyWords.Add("Homescreen");
             wallpaperManager.monitorSettings = new List<MonitorSetting>();
             wallpaperManager.getScreenSpace();
+            saveDirectory = Utility.pathToParent();
         }
+
+        #region Path Stuff
+        public string pathToImage(string board, string thread, string image, imageType type)
+        {
+            string path = pathToImageDirectory(board, thread, type);
+            path = Path.Combine(path, image + ".png");
+            return path;
+        }
+
+        public string pathToImageDirectory(string board, string thread, imageType type)
+        {
+            string path = pathToThreadDirectory(board, thread);
+            switch (type)
+            {
+                case imageType.thumbnail:
+                    path = Path.Combine(path, Utility.thumbnailPath);
+                    break;
+                case imageType.fullImage:
+                    path = Path.Combine(path, Utility.fullImagePath);
+                    break;
+            }
+            return path;
+        }
+
+        public string pathToThreadDirectory(string board, string thread)
+        {
+            string path = pathToBoardDirectory(board);
+            path = Path.Combine(path, thread);
+            return path;
+        }
+
+        public string pathToBoardDirectory(string board)
+        {
+            string path = saveDirectory;
+            path = Path.Combine(path, board);
+            return path;
+        }
+        #endregion
     }
 }

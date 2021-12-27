@@ -116,7 +116,7 @@ namespace AutoPape
                 }
             }
 
-            System.IO.DirectoryInfo info = new DirectoryInfo(Utility.pathToBoardDirectory(board));
+            System.IO.DirectoryInfo info = new DirectoryInfo(manager.pathToBoardDirectory(board));
 
             try
             {
@@ -133,7 +133,7 @@ namespace AutoPape
                     }
                     if (!threadExists)
                     {
-                        threads.Last().buildThreadFromDisk(board, directory.Name);
+                        threads.Last().buildThreadFromDisk(board, directory.Name, manager);
                         threads.Last().threadPanel = threadPanel;
                         System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                         {
@@ -160,13 +160,13 @@ namespace AutoPape
         public void buildFromDisk()
         {
             if (!mutex.WaitOne(300000)) return;
-            System.IO.DirectoryInfo info = new DirectoryInfo(Utility.pathToBoardDirectory(board));
+            System.IO.DirectoryInfo info = new DirectoryInfo(manager.pathToBoardDirectory(board));
             try
             {
                 foreach (var directory in info.GetDirectories())
                 {
                     threads.Add(new Thread());
-                    threads.Last().buildThreadFromDisk(board, directory.Name);
+                    threads.Last().buildThreadFromDisk(board, directory.Name, manager);
                     threads.Last().threadPanel = threadPanel;
                     System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                     {
@@ -200,7 +200,7 @@ namespace AutoPape
                 sub = Utility.cleanArchiveString(sub);
                 string teaser = rxArchiveTeaser.Match(threadContent).ToString();
                 teaser = Utility.cleanArchiveString(teaser);
-                threads.Add(new Thread(board, threadID, threadPanel, sub, teaser));
+                threads.Add(new Thread(board, threadID, threadPanel, sub, teaser, manager));
                 //buildItem(threads.Last(), true);
                 threads.Last().buildThreadFromWeb();
                 threads.Last().saveThread();
@@ -221,7 +221,7 @@ namespace AutoPape
                 string threadSanitized = thread.Value.Substring(thread.Value.IndexOf(':') + 1).TrimEnd(',', '}') + "}";
                 CatalogThread catalogThread = JsonSerializer.Deserialize<CatalogThread>(threadSanitized);
                 catalogThread.threadId = thread.Value.Split(':').First().Trim('\"');
-                threads.Add(new Thread(board, catalogThread.threadId, threadPanel, catalogThread.sub, catalogThread.teaser));
+                threads.Add(new Thread(board, catalogThread.threadId, threadPanel, catalogThread.sub, catalogThread.teaser, manager));
                 
                 threads.Last().sub = Utility.cleanHTMLString(threads.Last().sub);
 

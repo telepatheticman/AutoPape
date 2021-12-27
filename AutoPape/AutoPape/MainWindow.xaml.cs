@@ -19,6 +19,8 @@ using System.Drawing.Imaging;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.Threading;
+using Microsoft.Win32;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace AutoPape
 {
@@ -106,6 +108,9 @@ namespace AutoPape
 
             manager = new SettingsManager();
             manager.loadSettings();
+
+            SaveDirectoryBox.Text = manager.saveDirectory;
+
             foreach(var item in manager.blackList.keyWords)
             {
                 addBlackListItem(manager, item, true);
@@ -125,10 +130,10 @@ namespace AutoPape
                 saveClicked();
             };
 
-            ReRoll.Click += (o, e) =>
+            /*ReRoll.Click += (o, e) =>
             {
                 catalogWGDisk.setWallpaperAsync();
-            };
+            };*/
             threadPanelManager = new ThreadPanelManager(ThreadProgress, SaveButton, threadPanel);
             catalogWG = new Catalog("wg", catalogPanelWG, threadPanelManager, manager, catalogType.current);
             catalogWGDisk = new Catalog("wg", catalogPanelWGSaved, threadPanelManager, manager, catalogType.saved);

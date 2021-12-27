@@ -43,6 +43,14 @@
             </ScrollViewer>
         </Grid>
         <TabControl>
+            <TabItem Header="General Settings">
+                <StackPanel>
+                    <TextBlock Text="Save Directory:"/>
+                    <TextBox x:Name="SaveDirectoryBox"/>
+                    <Button x:Name="startBrowse" Content="Browse"/>
+                    <Button x:Name="setDirectory" Content="Set"/>
+                </StackPanel>
+            </TabItem>
             <TabItem Header="Monitor Settings">
                 <StackPanel Width="270" >
                     <TextBlock Text="Monitor: "/>
@@ -74,8 +82,11 @@
                     </ScrollViewer>
                 </StackPanel>
             </TabItem>
+            <TabItem Header="WhiteList">
+
+            </TabItem>
         </TabControl>
-        <Button Content="Refresh Wallpaper" Width="75" Name="ReRoll"/>
+        <!--Button Content="Refresh Wallpaper" Width="75" Name="ReRoll"/-->
     </StackPanel>
 
 </Window>

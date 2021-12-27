@@ -117,6 +117,8 @@ namespace AutoPape
         public ThreadButton threadButton;
         [XmlIgnore]
         private Mutex mutex;
+        [XmlIgnore]
+        private SettingsManager settings;
 
         public Thread()
         {
@@ -129,7 +131,7 @@ namespace AutoPape
             mutex = new Mutex();
         }
 
-        public Thread(string board, string threadId, ThreadPanelManager threadPanel, string sub, string teaser)
+        public Thread(string board, string threadId, ThreadPanelManager threadPanel, string sub, string teaser, SettingsManager settings)
         {
             this.threadId = threadId;
             this.board = board;
@@ -143,6 +145,7 @@ namespace AutoPape
             rxBlock = new Regex(@"\<blockquote.*?\<\/blockquote\>");
             threadButton = new ThreadButton();
             mutex = new Mutex();
+            this.settings = settings;
         }
 
         public void Lock()
@@ -239,14 +242,15 @@ namespace AutoPape
             await Task.Run(() => buildThreadFromWeb(needsTeaserImage)); ;
         }
 
-        public void buildThreadFromDisk(string board, string thread)
+        public void buildThreadFromDisk(string board, string thread, SettingsManager settings)
         {
             Lock();
+            this.settings = settings;
             fromDisk = true;
             XmlSerializer xmlSerializer = new XmlSerializer(this.GetType());
             FileStream stream = new FileStream(
                 Path.Combine(
-                    Utility.pathToThreadDirectory(board, thread), $"{thread}.xml"),
+                    settings.pathToThreadDirectory(board, thread), $"{thread}.xml"),
                 FileMode.Open);
             Thread toLoad = (Thread)xmlSerializer.Deserialize(stream);
             stream.Flush();
@@ -273,12 +277,12 @@ namespace AutoPape
                     Image thumb = new Image();
                     if(i == 0)
                     {
-                        thumb.Source = new BitmapImage(new Uri(Utility.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail)));
+                        thumb.Source = new BitmapImage(new Uri(settings.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail)));
                         teaserThumb = thumb;
                         i++;
                     }
-                    threadImage.imageurl = Utility.pathToImage(board, threadId, threadImage.imagename, imageType.fullImage);
-                    threadImage.thumburl = Utility.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail);
+                    threadImage.imageurl = settings.pathToImage(board, threadId, threadImage.imagename, imageType.fullImage);
+                    threadImage.thumburl = settings.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail);
                 });
             }
         }
@@ -290,7 +294,7 @@ namespace AutoPape
             if (fromDisk)
             {
                 threadImages.Clear();
-                buildThreadFromDisk(board, threadId);
+                buildThreadFromDisk(board, threadId, settings);
             }
             else
             {
@@ -368,8 +372,8 @@ namespace AutoPape
             if (fromDisk) return;
             if (!threadPanel.startProc(threadImages.Count(), false)) return;
 
-            string fullDirectory = Utility.pathToImageDirectory(board, threadId, imageType.fullImage);
-            string thumbDirecotry = Utility.pathToImageDirectory(board, threadId, imageType.thumbnail);
+            string fullDirectory = settings.pathToImageDirectory(board, threadId, imageType.fullImage);
+            string thumbDirecotry = settings.pathToImageDirectory(board, threadId, imageType.thumbnail);
             Directory.CreateDirectory(fullDirectory);
             Directory.CreateDirectory(thumbDirecotry);
 
@@ -377,8 +381,8 @@ namespace AutoPape
             foreach(var thread in threadImages)
             {
                 if(thread.imagename != null && 
-                    !File.Exists(Utility.pathToImage(board, threadId, thread.imagename, imageType.fullImage)) ||
-                    !File.Exists(Utility.pathToImage(board, threadId, thread.imagename, imageType.thumbnail)))
+                    !File.Exists(settings.pathToImage(board, threadId, thread.imagename, imageType.fullImage)) ||
+                    !File.Exists(settings.pathToImage(board, threadId, thread.imagename, imageType.thumbnail)))
                 {
                     Image toSave =
                     Utility.imageFromURL(
@@ -400,7 +404,7 @@ namespace AutoPape
                 }
                 else if(thread.imagename != null)
                 {
-                    Image full = Utility.imageFromDisk(Utility.pathToImage(board, threadId, thread.imagename, imageType.fullImage));
+                    Image full = Utility.imageFromDisk(settings.pathToImage(board, threadId, thread.imagename, imageType.fullImage));
                     System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                     {
                         thread.width = ((BitmapImage)full.Source).PixelWidth;
@@ -414,7 +418,7 @@ namespace AutoPape
             XmlSerializer xmlSerializer = new XmlSerializer(this.GetType());
             FileStream stream = new FileStream(
                 Path.Combine(
-                    Utility.pathToThreadDirectory(board, threadId),
+                    settings.pathToThreadDirectory(board, threadId),
                     threadId + ".xml"
                     ), 
                 FileMode.Create
