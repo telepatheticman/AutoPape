@@ -297,7 +297,7 @@ namespace AutoPape
             List<Tuple<Thread, ThreadImage>> tuple = new List<Tuple<Thread, ThreadImage>>();
             foreach(var thread in threads)
             {
-                thread.Lock();
+                if(!thread.Lock()) continue;
                 tuple.AddRange(thread.ToTupleList());
                 thread.Unlock();
             }
@@ -305,14 +305,38 @@ namespace AutoPape
         }
 
 
-        public void Lock()
+        public bool Lock()
         {
-            if (!mutex.WaitOne(300000)) return;
+            return mutex.WaitOne(300000);
         }
 
         public void Unlock()
         {
             mutex.ReleaseMutex();
+        }
+
+        public bool DeepLock()
+        {
+            if (!mutex.WaitOne(300000)) return false;
+
+            foreach(var thread in threads)
+            {
+                if (!thread.Lock())
+                {
+                    DeepUnlock();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public void DeepUnlock()
+        {
+            mutex.ReleaseMutex();
+            foreach (var thread in threads)
+            {
+                thread.Unlock();
+            }
         }
 
         public void setWallpaper()

@@ -148,9 +148,9 @@ namespace AutoPape
             this.settings = settings;
         }
 
-        public void Lock()
+        public bool Lock()
         {
-            mutex.WaitOne(300000);
+            return mutex.WaitOne(300000);
         }
 
         public void Unlock()
@@ -160,7 +160,7 @@ namespace AutoPape
 
         private void buildThreadImageInfo()
         {
-            Lock();
+            if(!Lock()) return;
             foreach (var image in threadImages)
             {
                 if (image.thumbWidth == 1 && image.thumbHeight == 1)
@@ -187,7 +187,7 @@ namespace AutoPape
 
         public void buildThreadFromWeb(bool needsTeaserImage = false)
         {
-            Lock();
+            if (!Lock()) return;
             fromDisk = false;
             var task = client.GetStringAsync(url);
             string result = task.GetAwaiter().GetResult();
@@ -244,7 +244,7 @@ namespace AutoPape
 
         public void buildThreadFromDisk(string board, string thread, SettingsManager settings)
         {
-            Lock();
+            if (!Lock()) return;
             this.settings = settings;
             fromDisk = true;
             XmlSerializer xmlSerializer = new XmlSerializer(this.GetType());
@@ -289,7 +289,7 @@ namespace AutoPape
 
         public void refresh(Mutex refreshLock = null)
         {
-            Lock();
+            if (!Lock()) return;
             refreshLock?.WaitOne(300000);
             if (fromDisk)
             {
@@ -367,7 +367,7 @@ namespace AutoPape
         {
             //TODO: Mutex this so ti is safe from refresh
             //Or build a safer refresh
-            Lock();
+            if (!Lock()) return;
             refreshLock?.WaitOne(300000);
             if (fromDisk) return;
             if (!threadPanel.startProc(threadImages.Count(), false)) return;
