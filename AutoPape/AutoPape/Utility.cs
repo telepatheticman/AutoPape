@@ -285,6 +285,27 @@ namespace AutoPape
             return name;
         }
 
+        public static void moveDirectory(string oldDir, string newDir)
+        {
+            moveDirectory(new DirectoryInfo(oldDir), new DirectoryInfo(newDir));
+        }
+
+        private static void moveDirectory(DirectoryInfo oldDir, DirectoryInfo newDir)
+        {
+            Directory.CreateDirectory(newDir.FullName);
+
+            foreach(FileInfo info in oldDir.GetFiles())
+            {
+                info.CopyTo(Path.Combine(newDir.FullName, info.Name), true);
+            }
+
+            foreach(DirectoryInfo oldDirSub in oldDir.GetDirectories())
+            {
+                DirectoryInfo nextNewDirSub = newDir.CreateSubdirectory(oldDirSub.Name);
+                moveDirectory(oldDirSub, nextNewDirSub);
+            }
+        }
+
         public static T DeepCopy<T>(T other)
         {
             using (MemoryStream ms = new MemoryStream())
