@@ -11,7 +11,7 @@ namespace AutoPape
     {
         ProgressBar progressBar;
         Button saveButton;
-        StackPanel threadPanel;
+        public StackPanel threadPanel;
 
         int images;
         bool isProcessing;

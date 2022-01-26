@@ -88,6 +88,8 @@ namespace AutoPape
         [XmlIgnore]
         public Image teaserThumb;
         [XmlIgnore]
+        public string teaserPath;
+        [XmlIgnore]
         public string url;
         [XmlAttribute]
         public string board;
@@ -155,7 +157,14 @@ namespace AutoPape
 
         public void Unlock()
         {
-            mutex.ReleaseMutex();
+            try
+            {
+                mutex.ReleaseMutex();
+            }
+            catch
+            {
+
+            }
         }
 
         private void buildThreadImageInfo()
@@ -278,6 +287,7 @@ namespace AutoPape
                     if(i == 0)
                     {
                         thumb.Source = new BitmapImage(new Uri(settings.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail)));
+                        teaserPath = settings.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail);
                         teaserThumb = thumb;
                         i++;
                     }

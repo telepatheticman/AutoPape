@@ -53,7 +53,7 @@ namespace AutoPape
 
         private Mutex mutex = new Mutex();
 
-        catalogType type;
+        public catalogType type;
 
         SettingsManager manager;
 
@@ -155,6 +155,26 @@ namespace AutoPape
         public async void refreshFromDiskAsync()
         {
             await Task.Run(() => refreshFromDisk());
+        }
+
+        public void moveThumbs()
+        {
+            if (!mutex.WaitOne(300000)) return;
+            if (type != catalogType.saved) return;
+            foreach (var thread in threads)
+            {
+                
+                FileInfo info = new FileInfo(thread.teaserPath);
+                Directory.CreateDirectory(manager.pathToImageDirectory(board, thread.threadId, imageType.thumbnail));
+                FileInfo newInfo = info.CopyTo(Path.Combine(manager.pathToImageDirectory(board, thread.threadId, imageType.thumbnail), info.Name), true);
+                Image thumb = new Image();
+                thumb.Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(newInfo.FullName));
+                thread.teaserThumb = thumb;
+                thread.threadButton.threadImage.Source = thumb.Source;
+                info.Delete();
+            }
+
+            mutex.ReleaseMutex();
         }
 
         public void buildFromDisk()

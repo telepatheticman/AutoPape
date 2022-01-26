@@ -287,6 +287,9 @@ namespace AutoPape
 
         public static void moveDirectory(string oldDir, string newDir)
         {
+            // If newDir contains oldDir, it is a sub directory and should not be used
+            // TODO: Display a warning if newDir is a sub directory and do not move
+
             moveDirectory(new DirectoryInfo(oldDir), new DirectoryInfo(newDir));
         }
 
@@ -296,13 +299,42 @@ namespace AutoPape
 
             foreach(FileInfo info in oldDir.GetFiles())
             {
-                info.CopyTo(Path.Combine(newDir.FullName, info.Name), true);
+                if (info.Name != "Settings.xml")
+                {
+                    try
+                    {
+                        info.CopyTo(Path.Combine(newDir.FullName, info.Name), true);
+                        info.Delete();
+                    }
+                    catch { };
+
+                }
             }
 
             foreach(DirectoryInfo oldDirSub in oldDir.GetDirectories())
             {
-                DirectoryInfo nextNewDirSub = newDir.CreateSubdirectory(oldDirSub.Name);
-                moveDirectory(oldDirSub, nextNewDirSub);
+                if (oldDirSub.Name != "CurrentPaper")
+                {
+                    DirectoryInfo nextNewDirSub = newDir.CreateSubdirectory(oldDirSub.Name);
+                    moveDirectory(oldDirSub, nextNewDirSub);
+                }
+            }
+        }
+
+        public static void deleteOld(string dir)
+        {
+            DirectoryInfo dirInfo = new DirectoryInfo(dir);
+            if(dir != pathToParent())
+            {
+                dirInfo.Delete(true);
+                return;
+            }
+            foreach(DirectoryInfo subInfo in dirInfo.GetDirectories())
+            {
+                if (subInfo.Name != "CurrentPaper")
+                {
+                    subInfo.Delete(true);
+                }
             }
         }
 

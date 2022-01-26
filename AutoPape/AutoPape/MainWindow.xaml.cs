@@ -21,6 +21,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using System.Diagnostics;
 
 namespace AutoPape
 {
@@ -35,6 +36,7 @@ namespace AutoPape
         SettingsManager manager;
         WallpaperManager wallManger;
         ThreadPanelManager threadPanelManager;
+        CatalogManager caManager;
         Catalog catalogWG;
         Catalog catalogWGDisk;
         Catalog catalogW;
@@ -106,6 +108,18 @@ namespace AutoPape
                     addBlackListItem(manager, BlackListText.Text);
                 };
 
+            startBrowse.Click +=
+                (o, e) =>
+                {
+                    saveBrowseClickedAsync();
+                };
+
+            setDirectory.Click +=
+                (o, e) =>
+                {
+                    setClicked();
+                };
+
             manager = new SettingsManager();
             manager.loadSettings();
 
@@ -139,8 +153,8 @@ namespace AutoPape
             catalogWGDisk = new Catalog("wg", catalogPanelWGSaved, threadPanelManager, manager, catalogType.saved);
             catalogW = new Catalog("w", catalogPanelW, threadPanelManager, manager, catalogType.current);
             catalogWDisk = new Catalog("w", catalogPanelWSaved, threadPanelManager, manager, catalogType.saved);
-            CatalogManager caManager = new CatalogManager(manager);
-            caManager.add(catalogWG);
+            caManager = new CatalogManager(manager);
+            //caManager.add(catalogWG);
             caManager.add(catalogWGDisk);
             //caManager.add(catalogW);
             //caManager.add(catalogWDisk);
@@ -150,6 +164,57 @@ namespace AutoPape
 
         //Needs to move into manager
         //Remove need for single board defined
+
+        public void setClicked()
+        {
+            caManager.deepLockAll();
+            threadPanelManager.threadPanel.Children.Clear();
+            threadPanelManager.activeThread = null;
+            string oldDirectory = manager.saveDirectory;
+            manager.oldSaveDirectory = manager.saveDirectory;
+            manager.saveDirectory = System.IO.Path.Combine(SaveDirectoryBox.Text, Utility.parent);
+            Utility.moveDirectory(oldDirectory, manager.saveDirectory);
+            manager.saveSettings();
+            foreach (var catalog in caManager.catalogs)
+            {
+                if (catalog.type == catalogType.saved)
+                {
+                    catalog.build();
+                }
+            }
+            ProcessStartInfo info = new ProcessStartInfo();
+            info.Arguments = "/C ping 127.0.0.1 -n 5 && \"" + Environment.GetCommandLineArgs()[0] + "\"";
+            info.UseShellExecute = true;
+            info.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+            info.CreateNoWindow = true;
+            info.FileName = "cmd.exe";
+            Process.Start(info);
+            Environment.Exit(-1);
+            caManager.deepUnlockAll();
+        }
+
+        public void saveBrowseClicked()
+        {
+
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.IsFolderPicker = true;
+            dialog.InitialDirectory = manager.saveDirectory;
+            CommonFileDialogResult result = new CommonFileDialogResult();
+            System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+            {
+                result = dialog.ShowDialog();
+
+                if(result == CommonFileDialogResult.Ok && 
+                   !string.IsNullOrEmpty(dialog.FileName)) 
+                    SaveDirectoryBox.Text = dialog.FileName;
+            });
+        }
+
+        public async void saveBrowseClickedAsync()
+        {
+            await Task.Run(() => { saveBrowseClicked(); });
+        }
+
         public void saveClicked()
         {
             Mutex refreshLock = new Mutex();

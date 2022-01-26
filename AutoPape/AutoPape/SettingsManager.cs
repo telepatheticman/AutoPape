@@ -57,6 +57,8 @@ namespace AutoPape
         public WallpaperManager wallpaperManager;
         [XmlElement("SaveDirectory")]
         public string saveDirectory;
+        [XmlElement("OldSaveDirectory")]
+        public string oldSaveDirectory;
         public SettingsManager(WallpaperManager wallpaperManager) : this()
         {
             this.wallpaperManager = wallpaperManager;
@@ -136,9 +138,15 @@ namespace AutoPape
             keyWords = loaded.keyWords;
             wallpaperManager = loaded.wallpaperManager;
             saveDirectory = loaded.saveDirectory;
-            if(string.IsNullOrEmpty(saveDirectory) || !Directory.Exists(saveDirectory))
+            oldSaveDirectory = loaded.oldSaveDirectory;
+            if (string.IsNullOrEmpty(saveDirectory) || !Directory.Exists(saveDirectory))
             {
                 saveDirectory = Utility.pathToParent();
+            }
+            if (!string.IsNullOrEmpty(oldSaveDirectory) && Directory.Exists(oldSaveDirectory))
+            {
+                Utility.deleteOld(oldSaveDirectory);
+                oldSaveDirectory = "";
             }
             saveSettings();
         }

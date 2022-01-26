@@ -112,6 +112,22 @@ namespace AutoPape
             }
         }
 
+        public void deepLockAll()
+        {
+            foreach (var catalog in catalogs)
+            {
+                catalog.DeepLock();
+            }
+        }
+
+        public void deepUnlockAll()
+        {
+            foreach (var catalog in catalogs)
+            {
+                catalog.DeepUnlock();
+            }
+        }
+
         private void lockAll()
         {
             foreach(var catalog in catalogs)
