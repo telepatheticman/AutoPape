@@ -23,6 +23,51 @@ namespace AutoPape
         fit
     }
 
+    public class ArchiveSettings
+    {
+        [XmlElement("AutoArchive")]
+        public bool autoArchive { get; set; }
+        [XmlElement("ArchiveBadFit")]
+        public bool archiveBadFit { get; set; }
+        [XmlElement("ArchiveBlacklist")]
+        public bool archiveBlacklist { get; set; }
+        [XmlElement("ArchiveNonWhitelist")]
+        public bool archiveNonWhitelist { get; set; }
+        [XmlElement("SaveBadFit")]
+        public bool saveBadFit { get; set; }
+        [XmlElement("SaveBlacklist")]
+        public bool saveBlacklist { get; set; }
+        [XmlElement("SaveNonWhitelist")]
+        public bool saveNonWhitelist { get; set; }
+        [XmlElement("LimitSpace")]
+        public bool limitSpace { get; set; }
+        [XmlElement("LimitBytes")]
+        public ulong limitBytes { get; set; }
+        [XmlElement("Units")]
+        public string limitUnits { get; set; }
+
+        public void buildDefault()
+        {
+            autoArchive = true;
+            archiveBadFit = true;
+            archiveBlacklist = true;
+            archiveNonWhitelist = true;
+
+            saveBadFit = true;
+            saveBlacklist = true;
+            saveNonWhitelist = true;
+            limitSpace = false;
+            limitBytes = 10;
+            limitBytes *= 1024;
+            limitBytes *= 1024;
+            limitBytes *= 1024;
+
+            limitUnits = "GB";
+
+        }
+
+    }
+
     public class BlackList
     {
         [XmlArrayAttribute("Images")]
@@ -48,6 +93,8 @@ namespace AutoPape
     {
         [XmlIgnore]
         private XmlSerializer serializer;
+        [XmlElement("ArchiveSettings")]
+        public ArchiveSettings archiveSettings { get; set; }
         [XmlElement("BlackList")]
         public BlackList blackList;
         [XmlArrayAttribute("WhiteListedKeyWords")]
@@ -70,6 +117,7 @@ namespace AutoPape
             blackList = new BlackList();
             keyWords = new List<string>();
             wallpaperManager = new WallpaperManager();
+            archiveSettings = new ArchiveSettings();
         }
 
 
@@ -139,6 +187,7 @@ namespace AutoPape
             wallpaperManager = loaded.wallpaperManager;
             saveDirectory = loaded.saveDirectory;
             oldSaveDirectory = loaded.oldSaveDirectory;
+            archiveSettings = loaded.archiveSettings;
             if (string.IsNullOrEmpty(saveDirectory) || !Directory.Exists(saveDirectory))
             {
                 saveDirectory = Utility.pathToParent();

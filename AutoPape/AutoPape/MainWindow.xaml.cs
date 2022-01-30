@@ -44,7 +44,7 @@ namespace AutoPape
 
         private void textBoxLimit(object sender, TextCompositionEventArgs e)
         {
-            Regex regex = new Regex("[^0-9]+");
+            Regex regex = new Regex(@"[^0-9]+");
             e.Handled = regex.IsMatch(e.Text);
         }
 
@@ -119,9 +119,22 @@ namespace AutoPape
                 {
                     setClicked();
                 };
+            applyArchive.Click +=
+                (o, e) =>
+                {
+                    applyArchiveSettings();
+                };
 
             manager = new SettingsManager();
             manager.loadSettings();
+
+            if(string.IsNullOrEmpty(manager.archiveSettings.limitUnits))
+            {
+                manager.archiveSettings.buildDefault();
+                manager.saveSettings();
+            }
+
+            setArchivesettings();
 
             SaveDirectoryBox.Text = manager.saveDirectory;
 
@@ -256,6 +269,44 @@ namespace AutoPape
         {
             settings.blackList.keyWords.Remove(toRemove);
             BlackList.Children.Remove(panelRemove);
+        }
+
+        public void applyArchiveSettings()
+        {
+            manager.archiveSettings.autoArchive = (bool)cbAutoArchive.IsChecked;
+            manager.archiveSettings.archiveBadFit = (bool)cbArchiveBadFit.IsChecked;
+            manager.archiveSettings.archiveBlacklist = (bool)cbArchiveBlacklist.IsChecked;
+
+            manager.archiveSettings.saveBadFit = (bool)cbSaveBadFit.IsChecked;
+            manager.archiveSettings.saveBlacklist = (bool)cbSaveBlacklist.IsChecked;
+
+            manager.archiveSettings.limitSpace = (bool)cbLimitSpace.IsChecked;
+            manager.archiveSettings.limitUnits = cbLimitUnit.Text;
+            if (cbLimitUnit.Text == "MB") manager.archiveSettings.limitBytes = ((ulong)int.Parse(tbLimitAmount.Text) * 1024) * 1024;
+            if (cbLimitUnit.Text == "GB") manager.archiveSettings.limitBytes = (((ulong)int.Parse(tbLimitAmount.Text) * 1024) * 1024) * 1024;
+            manager.saveSettings();
+        }
+
+        public void setArchivesettings()
+        {
+            cbAutoArchive.IsChecked = manager.archiveSettings.autoArchive;
+            cbArchiveBadFit.IsChecked = manager.archiveSettings.archiveBadFit;
+            cbArchiveBlacklist.IsChecked = manager.archiveSettings.archiveBlacklist;
+
+            cbSaveBadFit.IsChecked = manager.archiveSettings.saveBadFit;
+            cbSaveBlacklist.IsChecked = manager.archiveSettings.saveBlacklist;
+
+            cbLimitSpace.IsChecked = manager.archiveSettings.limitSpace;
+            foreach (var item in cbLimitUnit.Items)
+            {
+                //TODO: This check needs to be better. Probably similer to monitor settings combobox.
+                if (item.ToString() == $"System.Windows.Controls.ComboBoxItem: {manager.archiveSettings.limitUnits}")
+                {
+                    cbLimitUnit.SelectedItem = item;
+                }
+            }
+            if (manager.archiveSettings.limitUnits == "MB") tbLimitAmount.Text = $"{(manager.archiveSettings.limitBytes / 1024) / 1024}";
+            if (manager.archiveSettings.limitUnits == "GB") tbLimitAmount.Text = $"{((manager.archiveSettings.limitBytes / 1024) / 1024) / 1024}";
         }
 
     }

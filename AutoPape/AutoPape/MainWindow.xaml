@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AutoPape"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="1328.013">
+        Title="MainWindow" Height="450" Width="1443.013">
     <StackPanel Orientation="Horizontal" Name="stackPanelTest" Margin="0,0,2,0">
         <TabControl >
             <TabItem Header="WG">
@@ -42,13 +42,48 @@
                 <StackPanel Height="Auto" Width="Auto" Name="threadPanel"/>
             </ScrollViewer>
         </Grid>
-        <TabControl>
+        <TabControl Width="440">
             <TabItem Header="General Settings">
                 <StackPanel>
                     <TextBlock Text="Save Directory:"/>
                     <TextBox x:Name="SaveDirectoryBox"/>
                     <Button x:Name="startBrowse" Content="Browse"/>
                     <Button x:Name="setDirectory" Content="Set"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Archive Settings">
+                <StackPanel>
+                    <TextBlock>Auto Archive Settings:</TextBlock>
+                    <CheckBox x:Name="cbAutoArchive">
+                        Auto Archive
+                    </CheckBox>
+                    <CheckBox x:Name="cbArchiveBadFit">
+                        Save images that dont fit any current monitor
+                    </CheckBox>
+                    <CheckBox x:Name="cbArchiveBlacklist">
+                        Save items excluded by the blacklist
+                    </CheckBox>
+                    
+
+                    <TextBlock>Save Button Settings:</TextBlock>
+                    <CheckBox x:Name="cbSaveBadFit">
+                        Save images that dont fit any current monitor
+                    </CheckBox>
+                    <CheckBox x:Name="cbSaveBlacklist">
+                        Save items excluded by the blacklist
+                    </CheckBox>
+
+                    <TextBlock>General settings:</TextBlock>
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox x:Name="cbLimitSpace">Limit hardrive space usage to</CheckBox>
+                        <TextBox x:Name="tbLimitAmount" Margin="5 0 5 0" Width="75" PreviewTextInput="textBoxLimit">0</TextBox>
+                        <ComboBox Name="cbLimitUnit" Width="50">
+                            <ComboBoxItem>GB</ComboBoxItem>
+                            <ComboBoxItem>MB</ComboBoxItem>
+                        </ComboBox>
+                        <TextBlock>(Whole Numbers Only)</TextBlock>
+                    </StackPanel>
+                    <Button x:Name="applyArchive">Apply</Button>
                 </StackPanel>
             </TabItem>
             <TabItem Header="Monitor Settings">
