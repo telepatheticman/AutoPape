@@ -373,7 +373,7 @@ namespace AutoPape
             if (thumbs.Count() > 0) await Task.Run(() => setThreadContent(thumbs));
         }
 
-        public void saveThread(Mutex refreshLock = null)
+        public void saveThread(Mutex refreshLock = null, bool archive = false)
         {
             //TODO: Mutex this so ti is safe from refresh
             //Or build a safer refresh
@@ -381,6 +381,42 @@ namespace AutoPape
             refreshLock?.WaitOne(300000);
             if (fromDisk) return;
             if (!threadPanel.startProc(threadImages.Count(), false)) return;
+
+            if (archive && (!settings.archiveSettings.archiveBlacklist ||
+                !settings.archiveSettings.archiveNonWhitelist) &&
+                !settings.validThread(this))
+            {
+                threadPanel.endProc();
+                return;
+            }
+
+            if (!archive && (!settings.archiveSettings.saveBlacklist ||
+                !settings.archiveSettings.saveNonWhitelist) &&
+                !settings.validThread(this))
+            {
+                MessageBox.Show(
+                        "Can not save. (Thread does not meet Blacklist/Whitelist requirements)",
+                        "List Warning",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                threadPanel.endProc();
+                return;
+            }
+
+            if (settings.archiveSettings.limitSpace &&
+               settings.archiveSettings.limitBytes < Utility.saveDirectorySize(settings.saveDirectory))
+            {
+                if(!archive)
+                {
+                    MessageBox.Show(
+                        "Can not save. (Disk space limit reached)", 
+                        "Limit Warning", 
+                        MessageBoxButton.OK, 
+                        MessageBoxImage.Warning);
+                }
+                threadPanel.endProc();
+                return;
+            }
 
             string fullDirectory = settings.pathToImageDirectory(board, threadId, imageType.fullImage);
             string thumbDirecotry = settings.pathToImageDirectory(board, threadId, imageType.thumbnail);
@@ -404,6 +440,18 @@ namespace AutoPape
                         thread.width = ((BitmapImage)toSave.Source).PixelWidth;
                         thread.height = ((BitmapImage)toSave.Source).PixelHeight;
                     });
+
+                    if((!settings.archiveSettings.archiveBadFit && archive) ||
+                        (!settings.archiveSettings.saveBadFit && !archive))
+                    {
+                        bool valid = false;
+                        foreach(var mon in settings.wallpaperManager.monitorSettings)
+                        {
+                            valid |= Utility.validImage(thread, mon, client);
+                        }
+                        if (!valid) return;
+                    }
+
                     saveImage(fullDirectory, thread.imagename, toSave);
                     Image thumbToSave =
                     Utility.imageFromURL(

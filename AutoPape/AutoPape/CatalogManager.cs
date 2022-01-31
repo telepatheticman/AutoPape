@@ -105,6 +105,7 @@ namespace AutoPape
         public void archiveTick(object sender, EventArgs e)
         {
             archive.Interval = 86400000;
+            if (!manager.archiveSettings.autoArchive) return;
             foreach (var board in boards)
             {
                 Catalog toSave = new Catalog(board, manager, catalogType.archive);

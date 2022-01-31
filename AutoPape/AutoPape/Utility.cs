@@ -338,6 +338,30 @@ namespace AutoPape
             }
         }
 
+        public static ulong saveDirectorySize(string dir)
+        {
+            ulong size = 0;
+
+            DirectoryInfo dirInfo = new DirectoryInfo(dir);
+            foreach(var info in dirInfo.GetFiles())
+            {
+                if(info.Name != "Settings.xml")
+                {
+                    size += (ulong)info.Length;
+                }
+            }
+
+            foreach (DirectoryInfo subDirInfo in dirInfo.GetDirectories())
+            {
+                if(subDirInfo.Name != "CurrentPaper")
+                {
+                    size += saveDirectorySize(subDirInfo.FullName);
+                }
+            }
+
+            return size;
+        }
+
         public static T DeepCopy<T>(T other)
         {
             using (MemoryStream ms = new MemoryStream())

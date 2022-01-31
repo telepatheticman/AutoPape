@@ -223,7 +223,7 @@ namespace AutoPape
                 threads.Add(new Thread(board, threadID, threadPanel, sub, teaser, manager));
                 //buildItem(threads.Last(), true);
                 threads.Last().buildThreadFromWeb();
-                threads.Last().saveThread();
+                threads.Last().saveThread(archive: true);
             }
         }
 
