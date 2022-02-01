@@ -16,8 +16,8 @@ namespace AutoPape
     {
         Center,
         Stretch,
-        Fit,
-        Fill
+        Fit, //Height based fit
+        Fill //Width based fit
     }
 
     public class MonitorSetting
@@ -259,6 +259,22 @@ namespace AutoPape
 
             var ms = new System.IO.MemoryStream((byte[])converter.ConvertTo(bitmap, typeof(byte[])));
             monitor.Image = Image.FromStream(ms);
+        }
+
+        //Fill width
+        private void buildFill(MonitorSetting monitor)
+        {
+            double ratio = (double)monitor.Image.Width / (double)monitor.width;
+            int newWidth = (int)((double)monitor.Image.Width / ratio);
+            int newHeight = (int)((double)monitor.Image.Height / ratio);
+        }
+
+        //Fit height
+        private void buildFit(MonitorSetting monitor)
+        {
+            double ratio = (double)monitor.Image.Height / (double)monitor.height;
+            int newWidth = (int)((double)monitor.Image.Width / ratio);
+            int newHeight = (int)((double)monitor.Image.Height / ratio);
         }
 
         const int SPI_SETDESKWALLPAPER = 20;
