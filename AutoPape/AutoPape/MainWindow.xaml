@@ -8,22 +8,22 @@
         Title="MainWindow" Height="450" Width="1443.013">
     <StackPanel Orientation="Horizontal" Name="stackPanelTest" Margin="0,0,2,0">
         <TabControl >
-            <TabItem Header="WG">
+            <TabItem Header="WG" Name="tabWG">
                 <ScrollViewer Margin="0, 10, 0, 10">
                     <WrapPanel Height="Auto" Width="670" Name="catalogPanelWG"/>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="WG Saved">
+            <TabItem Header="WG Saved" Name="tabWGDisk">
                 <ScrollViewer Margin="0, 10, 0, 10">
                     <WrapPanel Height="Auto" Width="670" Name="catalogPanelWGSaved"/>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="W">
+            <TabItem Header="W" Name="tabW">
                 <ScrollViewer Margin="0, 10, 0, 10">
                     <WrapPanel Height="Auto" Width="670" Name="catalogPanelW"/>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="W Saved">
+            <TabItem Header="W Saved" Name="tabWDisk">
                 <ScrollViewer Margin="0, 10, 0, 10">
                     <WrapPanel Height="Auto" Width="670" Name="catalogPanelWSaved"/>
                 </ScrollViewer>
@@ -49,6 +49,25 @@
                     <TextBox x:Name="SaveDirectoryBox"/>
                     <Button x:Name="startBrowse" Content="Browse"/>
                     <Button x:Name="setDirectory" Content="Set"/>
+                    <TextBlock TextWrapping="Wrap">
+                        ATENTION: Setting a new directory will move all wallpapers saved from the boards to 
+                        the new chosen directoy. The AutoPape portion will be auto generated and does not need 
+                        to be set here. Pressing Set will stop all operations, move the wallapers, and restart the 
+                        application. If the application does not restart automaticly within 10 seconds, restart it 
+                        manualy and please report the bug. Bug reporting instructions can be found in the info tab.
+                    </TextBlock>
+                    <TextBlock>Boards:</TextBlock>
+                    <CheckBox x:Name="useWG">/WG/ - Wallpapers/General</CheckBox>
+                    <CheckBox x:Name="useW">/W/ - Anime/Wallpapers</CheckBox>
+                    <TextBlock>Wallpaper Set Interval:</TextBlock>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>Set wallaper every</TextBlock>
+                        <ComboBox Name="setInterval" Width="55" Margin="5 0 5 0">
+                            
+                        </ComboBox>
+                        <TextBlock>Minutes</TextBlock>
+                    </StackPanel>
+                    <Button x:Name="applyGeneral">Apply</Button>
                 </StackPanel>
             </TabItem>
             <TabItem Header="Archive Settings">

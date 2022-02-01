@@ -89,7 +89,7 @@ namespace AutoPape
         {
             //Random rand = new Random();
             //int toUse = rand.Next(0, catalogs.Count());
-            setPaper.Interval = 3600000;
+            setPaper.Interval = manager.interval * 60 * 1000;
             setWallpaperAsync();
         }
         public void refreshTick(object sender, EventArgs e)
@@ -108,6 +108,8 @@ namespace AutoPape
             if (!manager.archiveSettings.autoArchive) return;
             foreach (var board in boards)
             {
+                if (!manager.usingWG && board == "wg") continue;
+                if (!manager.usingW && board == "w") continue;
                 Catalog toSave = new Catalog(board, manager, catalogType.archive);
                 toSave.buildAsync();
             }
@@ -152,6 +154,8 @@ namespace AutoPape
             List<Tuple<Thread, ThreadImage>> tuple = new List<Tuple<Thread, ThreadImage>>();
             foreach(var catalog in catalogs)
             {
+                if (!manager.usingWG && catalog.board == "wg") continue;
+                if (!manager.usingW && catalog.board == "w") continue;
                 tuple.AddRange(catalog.ToTupleList());
             }
             tuple.Shuffle();

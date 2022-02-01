@@ -124,6 +124,11 @@ namespace AutoPape
                 {
                     applyArchiveSettings();
                 };
+            applyGeneral.Click +=
+                (o, e) =>
+                {
+                    applyGeneralSettings();
+                };
 
             manager = new SettingsManager();
             manager.loadSettings();
@@ -134,6 +139,9 @@ namespace AutoPape
                 manager.saveSettings();
             }
 
+
+
+            setGeneralSettings();
             setArchivesettings();
 
             SaveDirectoryBox.Text = manager.saveDirectory;
@@ -169,8 +177,8 @@ namespace AutoPape
             caManager = new CatalogManager(manager);
             caManager.add(catalogWG);
             caManager.add(catalogWGDisk);
-            //caManager.add(catalogW);
-            //caManager.add(catalogWDisk);
+            caManager.add(catalogW);
+            caManager.add(catalogWDisk);
             caManager.buildAllAsync();
             //catalogWG.buildCatalogInfoAsync(setWallpaper);
         }
@@ -269,6 +277,47 @@ namespace AutoPape
         {
             settings.blackList.keyWords.Remove(toRemove);
             BlackList.Children.Remove(panelRemove);
+        }
+
+        public void applyGeneralSettings()
+        {
+            manager.interval = (int)setInterval.SelectedItem;
+            manager.usingWG = (bool)useWG.IsChecked;
+            manager.usingW = (bool)useW.IsChecked;
+
+            tabWG.Visibility = manager.usingWG ? Visibility.Visible : Visibility.Collapsed;
+            tabWGDisk.Visibility = manager.usingWG ? Visibility.Visible : Visibility.Collapsed;
+            catalogPanelWG.Visibility = manager.usingWG ? Visibility.Visible : Visibility.Hidden;
+            catalogPanelWGSaved.Visibility = manager.usingWG ? Visibility.Visible : Visibility.Hidden;
+
+            tabW.Visibility = manager.usingW ? Visibility.Visible : Visibility.Collapsed;
+            tabWDisk.Visibility = manager.usingW ? Visibility.Visible : Visibility.Collapsed;
+            catalogPanelW.Visibility = manager.usingW ? Visibility.Visible : Visibility.Hidden;
+            catalogPanelWSaved.Visibility = manager.usingW ? Visibility.Visible : Visibility.Hidden;
+
+            manager.saveSettings();
+        }
+
+        public void setGeneralSettings()
+        {
+            setInterval.Items.Add(5);
+            setInterval.Items.Add(10);
+            setInterval.Items.Add(15);
+            setInterval.Items.Add(30);
+            setInterval.Items.Add(60);
+            setInterval.SelectedItem = manager.interval;
+            useWG.IsChecked = manager.usingWG;
+            useW.IsChecked = manager.usingW;
+
+            tabWG.Visibility = manager.usingWG ? Visibility.Visible : Visibility.Collapsed;
+            tabWGDisk.Visibility = manager.usingWG ? Visibility.Visible : Visibility.Collapsed;
+            catalogPanelWG.Visibility = manager.usingWG ? Visibility.Visible : Visibility.Hidden;
+            catalogPanelWGSaved.Visibility = manager.usingWG ? Visibility.Visible : Visibility.Hidden;
+
+            tabW.Visibility = manager.usingW ? Visibility.Visible : Visibility.Collapsed;
+            tabWDisk.Visibility = manager.usingW ? Visibility.Visible : Visibility.Collapsed;
+            catalogPanelW.Visibility = manager.usingW ? Visibility.Visible : Visibility.Hidden;
+            catalogPanelWSaved.Visibility = manager.usingW ? Visibility.Visible : Visibility.Hidden;
         }
 
         public void applyArchiveSettings()

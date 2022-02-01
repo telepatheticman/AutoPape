@@ -96,8 +96,10 @@ namespace AutoPape
         public void clear()
         {
             //TODO: Make this thread safe
+            if (!mutex.WaitOne(300000)) return;
             threads = new List<Thread>();
             activeThread = null;
+            mutex.ReleaseMutex();
         }
 
         public void refreshFromDisk()

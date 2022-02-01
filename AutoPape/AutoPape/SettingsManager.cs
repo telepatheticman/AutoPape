@@ -68,6 +68,31 @@ namespace AutoPape
 
     }
 
+
+    //TODO: Make whitelist and blacklist either the same object or inharit from same object
+    public class WhiteList
+    {
+        [XmlArrayAttribute("Images")]
+        [XmlArrayItem("Image")]
+        public List<string> images;
+        [XmlArrayAttribute("Threads")]
+        [XmlArrayItem("Thread")]
+        public List<string> threads;
+        [XmlArrayAttribute("KeyWords")]
+        [XmlArrayItem("KeyWord")]
+        public List<string> keyWords;
+        [XmlAttribute("Enabled")]
+        public bool enabeld;
+
+        public WhiteList()
+        {
+            images = new List<string>();
+            threads = new List<string>();
+            keyWords = new List<string>();
+            enabeld = false;
+        }
+    }
+
     public class BlackList
     {
         [XmlArrayAttribute("Images")]
@@ -79,12 +104,15 @@ namespace AutoPape
         [XmlArrayAttribute("KeyWords")]
         [XmlArrayItem("KeyWord")]
         public List<string> keyWords;
+        [XmlAttribute("Enabled")]
+        public bool enabeld;
 
         public BlackList()
         {
             images = new List<string>();
             threads = new List<string>();
             keyWords = new List<string>();
+            enabeld = true;
         }
     }
     
@@ -97,15 +125,20 @@ namespace AutoPape
         public ArchiveSettings archiveSettings { get; set; }
         [XmlElement("BlackList")]
         public BlackList blackList;
-        [XmlArrayAttribute("WhiteListedKeyWords")]
-        [XmlArrayItem("KeyWord")]
-        public List<string> keyWords;
+        [XmlElement("WhiteList")]
+        public WhiteList whiteList;
         [XmlElement("Monitors")]
         public WallpaperManager wallpaperManager;
         [XmlElement("SaveDirectory")]
         public string saveDirectory;
         [XmlElement("OldSaveDirectory")]
         public string oldSaveDirectory;
+        [XmlElement("TimeInterval")]
+        public int interval;
+        [XmlElement("WG")]
+        public bool usingWG;
+        [XmlElement("W")]
+        public bool usingW;
         public SettingsManager(WallpaperManager wallpaperManager) : this()
         {
             this.wallpaperManager = wallpaperManager;
@@ -115,9 +148,12 @@ namespace AutoPape
         {
             serializer = new XmlSerializer(this.GetType());
             blackList = new BlackList();
-            keyWords = new List<string>();
+            whiteList = new WhiteList();
             wallpaperManager = new WallpaperManager();
             archiveSettings = new ArchiveSettings();
+            interval = 60;
+            usingWG = true;
+            usingW = false;
         }
 
 
@@ -183,11 +219,14 @@ namespace AutoPape
         {
             serializer = loaded.serializer;
             blackList = loaded.blackList;
-            keyWords = loaded.keyWords;
+            whiteList = loaded.whiteList;
             wallpaperManager = loaded.wallpaperManager;
             saveDirectory = loaded.saveDirectory;
             oldSaveDirectory = loaded.oldSaveDirectory;
             archiveSettings = loaded.archiveSettings;
+            interval = loaded.interval;
+            usingW = loaded.usingW;
+            usingWG = loaded.usingWG;
             if (string.IsNullOrEmpty(saveDirectory) || !Directory.Exists(saveDirectory))
             {
                 saveDirectory = Utility.pathToParent();
