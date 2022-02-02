@@ -107,6 +107,11 @@ namespace AutoPape
                 {
                     addBlackListItem(manager, BlackListText.Text);
                 };
+            WhiteListAdd.Click +=
+                (o, e) =>
+                {
+                    addWhiteListItem(manager, WhiteListText.Text);
+                };
 
             startBrowse.Click +=
                 (o, e) =>
@@ -129,6 +134,11 @@ namespace AutoPape
                 {
                     applyGeneralSettings();
                 };
+            panelDropFiles.Drop +=
+                (o, e) =>
+                {
+                    fileDrop(o, e);
+                };
 
             manager = new SettingsManager();
             manager.loadSettings();
@@ -150,7 +160,11 @@ namespace AutoPape
             {
                 addBlackListItem(manager, item, true);
             }
-            foreach(var monitor in manager.wallpaperManager.monitorSettings)
+            foreach (var item in manager.whiteList.keyWords)
+            {
+                addWhiteListItem(manager, item, true);
+            }
+            foreach (var monitor in manager.wallpaperManager.monitorSettings)
             {
                 MonitorBox.Items.Add(monitor);
                 if(monitor.primary)
@@ -175,13 +189,30 @@ namespace AutoPape
             catalogW = new Catalog("w", catalogPanelW, threadPanelManager, manager, catalogType.current);
             catalogWDisk = new Catalog("w", catalogPanelWSaved, threadPanelManager, manager, catalogType.saved);
             caManager = new CatalogManager(manager);
-            caManager.add(catalogWG);
+            //caManager.add(catalogWG);
             caManager.add(catalogWGDisk);
-            caManager.add(catalogW);
+            //caManager.add(catalogW);
             caManager.add(catalogWDisk);
             caManager.buildAllAsync();
             //catalogWG.buildCatalogInfoAsync(setWallpaper);
         }
+
+
+        public void fileDrop(object sender, System.Windows.DragEventArgs e)
+        {
+            string[] files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+            foreach(var file in files)
+            {
+                string ext = System.IO.Path.GetExtension(file);
+                if (ext.ToLower() != "jpg" || ext.ToLower() != "jpeg" || ext.ToLower() != "png") continue;
+                System.IO.File.Copy(
+                    file, 
+                    System.IO.Path.Combine(
+                        manager.customDirectory, System.IO.Path.GetFileName(file)));
+            }
+            
+        }
+
 
         //Needs to move into manager
         //Remove need for single board defined
@@ -271,12 +302,49 @@ namespace AutoPape
                 BlackList.Children.Add(item);
                 BlackListText.Text = "";
             }
+            if(!fromList) settings.saveSettings();
         }
 
         public void removeBlackListItem(SettingsManager settings, string toRemove, StackPanel panelRemove)
         {
             settings.blackList.keyWords.Remove(toRemove);
             BlackList.Children.Remove(panelRemove);
+            settings.saveSettings();
+        }
+
+        public void addWhiteListItem(SettingsManager settings, string toAdd, bool fromList = false)
+        {
+            if ((!settings.whiteList.keyWords.Contains(toAdd) || fromList) && !string.IsNullOrEmpty(toAdd))
+            {
+                //TODO: Fix this garbage
+                if (!fromList) settings.whiteList.keyWords.Add(toAdd);
+
+                StackPanel item = new StackPanel();
+                item.Orientation = System.Windows.Controls.Orientation.Horizontal;
+                item.Margin = new Thickness(10);
+                TextBlock itemText = new TextBlock();
+                itemText.Text = toAdd;
+                System.Windows.Controls.Button itemButton = new System.Windows.Controls.Button();
+                itemButton.Content = "X";
+                itemButton.Width = 10;
+                itemButton.Height = 10;
+                itemButton.Click += (o, e) =>
+                {
+                    removeWhiteListItem(settings, toAdd, item);
+                };
+                item.Children.Add(itemText);
+                item.Children.Add(itemButton);
+                WhiteList.Children.Add(item);
+                WhiteListText.Text = "";
+            }
+            if (!fromList) settings.saveSettings();
+        }
+
+        public void removeWhiteListItem(SettingsManager settings, string toRemove, StackPanel panelRemove)
+        {
+            settings.whiteList.keyWords.Remove(toRemove);
+            WhiteList.Children.Remove(panelRemove);
+            settings.saveSettings();
         }
 
         public void applyGeneralSettings()
@@ -284,6 +352,9 @@ namespace AutoPape
             manager.interval = (int)setInterval.SelectedItem;
             manager.usingWG = (bool)useWG.IsChecked;
             manager.usingW = (bool)useW.IsChecked;
+            manager.blackList.enabeld = (bool)useBlack.IsChecked;
+            manager.whiteList.enabeld = (bool)useWhite.IsChecked;
+            manager.whiteOverBlack = (bool)WhiteOverBlack.IsChecked;
 
             tabWG.Visibility = manager.usingWG ? Visibility.Visible : Visibility.Collapsed;
             tabWGDisk.Visibility = manager.usingWG ? Visibility.Visible : Visibility.Collapsed;
@@ -308,6 +379,10 @@ namespace AutoPape
             setInterval.SelectedItem = manager.interval;
             useWG.IsChecked = manager.usingWG;
             useW.IsChecked = manager.usingW;
+
+            useBlack.IsChecked = manager.blackList.enabeld;
+            useWhite.IsChecked = manager.whiteList.enabeld;
+            WhiteOverBlack.IsChecked = manager.whiteOverBlack;
 
             tabWG.Visibility = manager.usingWG ? Visibility.Visible : Visibility.Collapsed;
             tabWGDisk.Visibility = manager.usingWG ? Visibility.Visible : Visibility.Collapsed;

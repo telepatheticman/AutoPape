@@ -139,6 +139,17 @@ namespace AutoPape
         public bool usingWG;
         [XmlElement("W")]
         public bool usingW;
+        [XmlElement("WhiteOverBlack")]
+        public bool whiteOverBlack;
+
+        [XmlIgnore]
+        public string customDirectory
+        {
+            get
+            {
+                return Path.Combine(saveDirectory, "Custom");
+            }
+        }
         public SettingsManager(WallpaperManager wallpaperManager) : this()
         {
             this.wallpaperManager = wallpaperManager;
@@ -154,31 +165,69 @@ namespace AutoPape
             interval = 60;
             usingWG = true;
             usingW = false;
+            whiteOverBlack = false;
         }
 
 
-
+        //TODO: This can be written much better. Split later.
         public bool validThread(Thread check)
         {
             bool valid = true;
-
-            /*foreach (var keyword in keyWords)
+            if(!whiteOverBlack)
             {
-                if (check.sub.Contains(keyword) || check.teaser.Contains(keyword))
+                if (whiteList.enabeld)
                 {
-                    valid = true;
-                    break;
+                    foreach (var keyword in whiteList.keyWords)
+                    {
+                        if (!check.sub.ToLower().Contains(keyword.ToLower()) ||
+                            !check.teaser.ToLower().Contains(keyword.ToLower()))
+                        {
+                            valid = false;
+                            break;
+                        }
+                    }
                 }
-            }*/
 
-            foreach (var keyword in blackList.keyWords)
-            {
-                if (check.sub.ToLower().Contains(keyword.ToLower()) ||
-                    check.teaser.ToLower().Contains(keyword.ToLower()))
+                if (blackList.enabeld)
                 {
-                    valid = false;
-                    break;
+                    foreach (var keyword in blackList.keyWords)
+                    {
+                        if (check.sub.ToLower().Contains(keyword.ToLower()) ||
+                            check.teaser.ToLower().Contains(keyword.ToLower()))
+                        {
+                            valid = false;
+                            break;
+                        }
+                    }
                 }
+            }
+            else
+            {
+                if (blackList.enabeld)
+                {
+                    foreach (var keyword in blackList.keyWords)
+                    {
+                        if (check.sub.ToLower().Contains(keyword.ToLower()) ||
+                            check.teaser.ToLower().Contains(keyword.ToLower()))
+                        {
+                            valid = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (whiteList.enabeld)
+                {
+                    foreach (var keyword in whiteList.keyWords)
+                    {
+                        if (!check.sub.ToLower().Contains(keyword.ToLower()) ||
+                            !check.teaser.ToLower().Contains(keyword.ToLower()))
+                        {
+                            valid = false;
+                            break;
+                        }
+                    }
+                }                
             }
 
             return valid;
@@ -227,6 +276,7 @@ namespace AutoPape
             interval = loaded.interval;
             usingW = loaded.usingW;
             usingWG = loaded.usingWG;
+            whiteOverBlack = loaded.whiteOverBlack;
             if (string.IsNullOrEmpty(saveDirectory) || !Directory.Exists(saveDirectory))
             {
                 saveDirectory = Utility.pathToParent();
@@ -236,6 +286,7 @@ namespace AutoPape
                 Utility.deleteOld(oldSaveDirectory);
                 oldSaveDirectory = "";
             }
+            Directory.CreateDirectory(customDirectory);
             saveSettings();
         }
 
@@ -252,6 +303,7 @@ namespace AutoPape
             wallpaperManager.monitorSettings = new List<MonitorSetting>();
             wallpaperManager.getScreenSpace();
             saveDirectory = Utility.pathToParent();
+            Directory.CreateDirectory(customDirectory);
         }
 
         #region Path Stuff

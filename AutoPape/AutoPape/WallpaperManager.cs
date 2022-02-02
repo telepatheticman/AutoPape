@@ -20,6 +20,13 @@ namespace AutoPape
         Fill //Width based fit
     }
 
+    public enum fitMode
+    {
+        fit,
+        narrow,
+        wide
+    }
+
     public class MonitorSetting
     {
         [XmlAttribute("MonitorName")]
@@ -41,6 +48,8 @@ namespace AutoPape
         public fit fitOption = fit.Center;
         public fit narrowOption = fit.Fill;
         public fit wideOption = fit.Fill;
+        [XmlIgnore]
+        public fitMode mode = fitMode.fit;
         [XmlIgnore]
         public orientation orientation
         {
@@ -114,12 +123,48 @@ namespace AutoPape
             //getScreenSpace();
         }
 
+        private void buildPortionFit(MonitorSetting setting, fit toSwitch)
+        {
+            switch (toSwitch)
+            {
+                case fit.Center:
+                    buildCentered(setting);
+                    break;
+                case fit.Stretch:
+                    buildStretched(setting);
+                    break;
+                case fit.Fill:
+                    buildFill(setting);
+                    break;
+                case fit.Fit:
+                    buildFit(setting);
+                    break;
+            }
+        }
+
+        private void buildPortionMode(MonitorSetting setting)
+        {
+            switch (setting.mode)
+            {
+                case fitMode.narrow:
+                    buildPortionFit(setting, setting.narrowOption);
+                    break;
+                case fitMode.wide:
+                    buildPortionFit(setting, setting.wideOption);
+                    break;
+                case fitMode.fit:
+                    buildStretched(setting);
+                    break;
+            }
+        }
+
         public void buildWallpaper()
         {
             wallpaper = new Bitmap(width, height);
             foreach(var setting in monitorSettings)
             {
-                buildStretched(setting);
+                buildPortionMode(setting);
+
                 using (Graphics g = Graphics.FromImage(wallpaper))
                 {
                     g.DrawImage(setting.Image, setting.x + xOffset, setting.y + yOffset, setting.width, setting.height);
@@ -232,6 +277,8 @@ namespace AutoPape
             yOffset = Math.Abs(yMin);
         }
 
+        //TODO: Condence the build modes. Lots of shared code
+
         private void buildCentered(MonitorSetting monitor)
         {
             int xCenterOffset = (monitor.width / 2) - (monitor.Image.Width / 2);
@@ -250,10 +297,11 @@ namespace AutoPape
 
         private void buildStretched(MonitorSetting monitor)
         {
-            Bitmap bitmap = new Bitmap(monitor.Image, monitor.Image.Width, monitor.Image.Height);
+            Bitmap bitmap = new Bitmap(monitor.width, monitor.height);
             using (Graphics g = Graphics.FromImage(bitmap))
             {
                 g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.DrawImage(monitor.Image, 0, 0, monitor.width, monitor.height);
             }
             ImageConverter converter = new ImageConverter();
 
@@ -267,6 +315,20 @@ namespace AutoPape
             double ratio = (double)monitor.Image.Width / (double)monitor.width;
             int newWidth = (int)((double)monitor.Image.Width / ratio);
             int newHeight = (int)((double)monitor.Image.Height / ratio);
+
+            int xCenterOffset = (monitor.width / 2) - (newWidth / 2);
+            int yCenterOffset = (monitor.height / 2) - (newHeight / 2);
+
+            Bitmap bitmap = new Bitmap(monitor.width, monitor.height);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.DrawImage(monitor.Image, xCenterOffset, yCenterOffset, newWidth, newHeight);
+            }
+            ImageConverter converter = new ImageConverter();
+
+            var ms = new System.IO.MemoryStream((byte[])converter.ConvertTo(bitmap, typeof(byte[])));
+            monitor.Image = Image.FromStream(ms);
         }
 
         //Fit height
@@ -275,6 +337,20 @@ namespace AutoPape
             double ratio = (double)monitor.Image.Height / (double)monitor.height;
             int newWidth = (int)((double)monitor.Image.Width / ratio);
             int newHeight = (int)((double)monitor.Image.Height / ratio);
+
+            int xCenterOffset = (monitor.width / 2) - (newWidth / 2);
+            int yCenterOffset = (monitor.height / 2) - (newHeight / 2);
+
+            Bitmap bitmap = new Bitmap(monitor.width, monitor.height);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.DrawImage(monitor.Image, xCenterOffset, yCenterOffset, newWidth, newHeight);
+            }
+            ImageConverter converter = new ImageConverter();
+
+            var ms = new System.IO.MemoryStream((byte[])converter.ConvertTo(bitmap, typeof(byte[])));
+            monitor.Image = Image.FromStream(ms);
         }
 
         const int SPI_SETDESKWALLPAPER = 20;

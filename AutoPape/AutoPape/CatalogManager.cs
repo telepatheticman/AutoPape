@@ -11,6 +11,7 @@ namespace AutoPape
     class CatalogManager
     {
         public List<Catalog> catalogs;
+        public Thread customThread;
         public List<string> boards;
         SettingsManager manager;
         Timer setPaper;
@@ -35,6 +36,9 @@ namespace AutoPape
             archive.Start();
 
             this.manager = manager;
+
+            customThread = new Thread("Custom", "Custom", null, "Custom Papers", "The Custome Wallpapers", manager);
+            customThread.buildFromCustom();
             //setPaper.Interval = 10000;
         }
 
@@ -158,9 +162,12 @@ namespace AutoPape
                 if (!manager.usingW && catalog.board == "w") continue;
                 tuple.AddRange(catalog.ToTupleList());
             }
-            tuple.Shuffle();
+            customThread.buildFromCustom();
+            tuple.AddRange(customThread.ToTupleList());
             foreach (var monitor in manager.wallpaperManager.monitorSettings)
             {
+                tuple.Shuffle();
+                monitor.mode = fitMode.fit;
                 //string imageUrl = "";
                 //string threadUsed = "";
 
@@ -182,6 +189,7 @@ namespace AutoPape
                                 monitor.board = pair.Item1.board;
                                 monitor.thread = pair.Item1.threadId;
                                 monitor.imageName = Utility.nameFromURL(pair.Item2.imageurl);
+                                //monitor.setMode(pair.Item2);
                             });
                             if (monitor.Image != null)
                             {
@@ -198,6 +206,7 @@ namespace AutoPape
                     }
                 }
             }
+            tuple.Clear();
             manager.wallpaperManager.buildWallpaper();
             //mutex.ReleaseMutex();
             unlockAll();

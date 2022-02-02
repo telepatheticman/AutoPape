@@ -297,6 +297,24 @@ namespace AutoPape
             }
         }
 
+        public void buildFromCustom()
+        {
+            fromDisk = true;
+            threadImages.Clear();
+            DirectoryInfo dirInfo = new DirectoryInfo(settings.customDirectory);
+            foreach(var file in dirInfo.GetFiles())
+            {
+                ThreadImage image = new ThreadImage();
+                BitmapImage imageInfo = new BitmapImage(new Uri(file.FullName));
+                //imageInfo.Source = new BitmapImage();
+                image.imagename = file.Name;// + "." + file.Extension;
+                image.imageurl = file.FullName;
+                image.width = imageInfo.PixelWidth;
+                image.height = imageInfo.PixelHeight;
+                threadImages.Add(image);
+            }
+        }
+
         public void refresh(Mutex refreshLock = null)
         {
             if (!Lock()) return;

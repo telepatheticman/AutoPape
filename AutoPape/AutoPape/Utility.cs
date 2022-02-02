@@ -253,7 +253,12 @@ namespace AutoPape
                     image.height = ((BitmapImage)full.Source).PixelHeight;
                 });
             }
-            if (!(image.resolution >= settings.minimumResolution)) valid = false; 
+            if (!(image.resolution >= settings.minimumResolution)) valid = false;
+
+            if (ratio < settings.aspectRatio + tolerance) settings.mode = fitMode.narrow;
+            else if (ratio > settings.aspectRatio - tolerance) settings.mode = fitMode.wide;
+            else settings.mode = fitMode.fit;
+
             return valid;
         }
 
@@ -361,6 +366,11 @@ namespace AutoPape
 
             return size;
         }
+
+        /*public static void setMode(this MonitorSetting monitor, ThreadImage threadImage)
+        {
+            if (threadImage.aspectRatio < monitor.aspectRatio) monitor.mode = fitMode.narrow;
+        }*/
 
         public static T DeepCopy<T>(T other)
         {
