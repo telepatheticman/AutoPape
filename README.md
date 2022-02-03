@@ -24,6 +24,10 @@
   - This is off by default. Saving this much can get large fast, so be carfull with this feature.
   - You can limit how much space can be used by the save directory to reduce archiving impact.
   - You can also limit how much is saved by only allowing images that properly fit your monitors and only taking from threads that pass the blacklist/whitelist check.
+- If a wallpaper can not be found that fits all parameters for your monitor:
+  - A default wallpaper will be generated. It will be a random solid color and white text in the center showing the hex representation of the color.
+  - Maybe be less picky.
+  - Maybe get a monitor that isnt a weird resolution that no one likes/uses.
 ## Modes explained for narrower/Wider wallapers:
 - ### Center
   - Centers the wallpaper on the screen. Narrower wallpapers will have a black boarder, wider wallpapers will be cut off on all sides
