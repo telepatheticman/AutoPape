@@ -121,6 +121,8 @@ namespace AutoPape
         private Mutex mutex;
         [XmlIgnore]
         private SettingsManager settings;
+        [XmlIgnore]
+        public bool webRemoved = false;
 
         public Thread()
         {
@@ -167,7 +169,7 @@ namespace AutoPape
             }
         }
 
-        private void buildThreadImageInfo()
+        public void buildThreadImageInfo()
         {
             if(!Lock()) return;
             foreach (var image in threadImages)
@@ -198,7 +200,18 @@ namespace AutoPape
         {
             if (!Lock()) return;
             fromDisk = false;
-            var task = client.GetStringAsync(url);
+            Task<string> task = null; ;
+            try
+            {
+                task = client.GetStringAsync(url);
+            }
+            catch
+            {
+                threadButton.button.Visibility = Visibility.Collapsed;
+                webRemoved = true;
+                Unlock();
+                return;
+            }
             string result = task.GetAwaiter().GetResult();
             var Blocks = rxBlock.Matches(result);
             foreach(var badBlock in Blocks)
@@ -241,7 +254,7 @@ namespace AutoPape
                 }
             }
 
-            buildThreadImageInfoAsync();
+            //buildThreadImageInfoAsync();
             buildItem();
             Unlock();
         }
@@ -326,7 +339,7 @@ namespace AutoPape
             }
             else
             {
-
+                buildThreadFromWeb();
             }
             refreshLock?.ReleaseMutex();
             Unlock();

@@ -163,7 +163,14 @@ namespace AutoPape
             wallpaper = new Bitmap(width, height);
             foreach(var setting in monitorSettings)
             {
-                buildPortionMode(setting);
+                if (setting.Image != null)
+                {
+                    buildPortionMode(setting);
+                }
+                else
+                {
+                    buildDefaultPaper(setting);
+                }
 
                 using (Graphics g = Graphics.FromImage(wallpaper))
                 {

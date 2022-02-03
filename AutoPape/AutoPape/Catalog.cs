@@ -102,19 +102,46 @@ namespace AutoPape
             mutex.ReleaseMutex();
         }
 
+        public void refreshFromWeb()
+        {
+            if (!mutex.WaitOne(300000)) return;
+
+            for(int i = threads.Count - 1; i >= 0; i--) 
+            {
+                try
+                {
+                    threads[i].refresh();
+                    if (threads[i].webRemoved)
+                    {
+                        wrapPanel.Children.Remove(threads[i].threadButton.button);
+                        threads.Remove(threads[i]);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    wrapPanel.Children.Remove(threads[i].threadButton.button);
+                }
+            }
+
+            buildFromWeb();
+            mutex.ReleaseMutex();
+
+        }
+
         public void refreshFromDisk()
         {
             if (!mutex.WaitOne(300000)) return;
 
-            foreach(var thread in threads)
+            for (int i = threads.Count - 1; i >= 0; i--)
             {
                 try
                 {
-                    thread.refresh();
+                    threads[i].refresh();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                    wrapPanel.Children.Remove(thread.threadButton.button);
+                    wrapPanel.Children.Remove(threads[i].threadButton.button);
+                    threads.Remove(threads[i]);
                 }
             }
 
@@ -232,7 +259,15 @@ namespace AutoPape
         void buildFromWeb()
         {
             if (!mutex.WaitOne(300000)) return;
-            var task = client.GetStringAsync(url);
+            Task<string> task = null;
+            try
+            {
+                task = client.GetStringAsync(url);
+            }
+            catch
+            {
+                wrapPanel.Children.Clear();
+            }
             string result = task.GetAwaiter().GetResult();
 
             string FullJson = rxFullJson.Match(result).Value;
@@ -243,6 +278,12 @@ namespace AutoPape
                 string threadSanitized = thread.Value.Substring(thread.Value.IndexOf(':') + 1).TrimEnd(',', '}') + "}";
                 CatalogThread catalogThread = JsonSerializer.Deserialize<CatalogThread>(threadSanitized);
                 catalogThread.threadId = thread.Value.Split(':').First().Trim('\"');
+                bool exists = false;
+                foreach (var existingThreads in threads)
+                {
+                    if (existingThreads.threadId == catalogThread.threadId) exists = true;
+                }
+                if (exists) continue;
                 threads.Add(new Thread(board, catalogThread.threadId, threadPanel, catalogThread.sub, catalogThread.teaser, manager));
                 
                 threads.Last().sub = Utility.cleanHTMLString(threads.Last().sub);

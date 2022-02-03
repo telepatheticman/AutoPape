@@ -175,6 +175,8 @@ namespace AutoPape
                 {
                     if (manager.validThread(pair.Item1))
                     {
+                        if(!pair.Item1.fromDisk)
+                            pair.Item1.buildThreadImageInfo();
                         if (Utility.validImage(pair.Item2, monitor, pair.Item1.client))
                         {
                             System.Windows.Controls.Image controlImageToUse = null;
