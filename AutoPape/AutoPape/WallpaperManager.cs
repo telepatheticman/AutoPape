@@ -277,6 +277,37 @@ namespace AutoPape
             yOffset = Math.Abs(yMin);
         }
 
+
+        private void buildDefaultPaper(MonitorSetting monitor)
+        {
+            Random random = new Random();
+            int red = random.Next(0, 256);
+            int green = random.Next(0, 256);
+            int blue = random.Next(0, 255);
+            string hexColor = "#" + red.ToString("X2") + green.ToString("X2") + red.ToString("X2");
+            Color c = Color.FromArgb(red, green, blue);
+            SolidBrush brush = new SolidBrush(c);
+            Bitmap bitmap = new Bitmap(monitor.width, monitor.height);
+            Font font = new Font("Arial", 50, FontStyle.Bold, GraphicsUnit.Point);
+            TextFormatFlags flags = TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter |
+                TextFormatFlags.WordBreak;
+            Rectangle rect = new Rectangle(0, 0, monitor.width, monitor.height);
+
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.FillRectangle(brush, 0, 0, monitor.width, monitor.height);
+                TextRenderer.DrawText(g, hexColor, font, rect, Color.White, flags);
+                //g.DrawImage(monitor.Image, xCenterOffset, yCenterOffset, monitor.Image.Width, monitor.Image.Height);
+            }
+            brush.Dispose();
+            font.Dispose();
+            ImageConverter converter = new ImageConverter();
+
+            var ms = new System.IO.MemoryStream((byte[])converter.ConvertTo(bitmap, typeof(byte[])));
+            monitor.Image = Image.FromStream(ms);
+            //monitor.imageName = "Test";
+        }
+
         //TODO: Condence the build modes. Lots of shared code
 
         private void buildCentered(MonitorSetting monitor)
