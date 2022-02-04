@@ -102,7 +102,7 @@ namespace AutoPape
             mutex.ReleaseMutex();
         }
 
-        public void refreshFromWeb()
+        public void refreshFromWeb(Mutex refreshLock = null)
         {
             if (!mutex.WaitOne(300000)) return;
 
@@ -110,16 +110,22 @@ namespace AutoPape
             {
                 try
                 {
-                    threads[i].refresh();
+                    threads[i].refresh(refreshLock);
                     if (threads[i].webRemoved)
                     {
-                        wrapPanel.Children.Remove(threads[i].threadButton.button);
-                        threads.Remove(threads[i]);
+                        System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                        {
+                            wrapPanel.Children.Remove(threads[i].threadButton.button);
+                            threads.Remove(threads[i]);
+                        });
                     }
                 }
                 catch (Exception ex)
                 {
-                    wrapPanel.Children.Remove(threads[i].threadButton.button);
+                    System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                    {
+                        wrapPanel.Children.Remove(threads[i].threadButton.button);
+                    });
                 }
             }
 
@@ -128,7 +134,12 @@ namespace AutoPape
 
         }
 
-        public void refreshFromDisk()
+        public async void refreshFromWebAsync(Mutex refreshLock = null)
+        {
+            await Task.Run(() => refreshFromWeb(refreshLock));
+        }
+
+        public void refreshFromDisk(Mutex refreshLock = null)
         {
             if (!mutex.WaitOne(300000)) return;
 
@@ -136,12 +147,15 @@ namespace AutoPape
             {
                 try
                 {
-                    threads[i].refresh();
+                    threads[i].refresh(refreshLock);
                 }
                 catch (Exception ex)
                 {
-                    wrapPanel.Children.Remove(threads[i].threadButton.button);
-                    threads.Remove(threads[i]);
+                    System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                    {
+                        wrapPanel.Children.Remove(threads[i].threadButton.button);
+                        threads.Remove(threads[i]);
+                    });
                 }
             }
 
@@ -162,6 +176,7 @@ namespace AutoPape
                     }
                     if (!threadExists)
                     {
+                        threads.Add(new Thread());
                         threads.Last().buildThreadFromDisk(board, directory.Name, manager);
                         threads.Last().threadPanel = threadPanel;
                         System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
@@ -181,9 +196,22 @@ namespace AutoPape
             mutex.ReleaseMutex();
         }
 
-        public async void refreshFromDiskAsync()
+        public async void refreshFromDiskAsync(Mutex refreshLock = null)
         {
-            await Task.Run(() => refreshFromDisk());
+            await Task.Run(() => refreshFromDisk(refreshLock));
+        }
+
+        public void refresh(Mutex refreshLock = null)
+        {
+            switch (type)
+            {
+                case catalogType.current:
+                    refreshFromWebAsync(refreshLock);
+                    break;
+                case catalogType.saved:
+                    refreshFromDiskAsync(refreshLock);
+                    break;
+            }
         }
 
         public void moveThumbs()

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AutoPape"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="1458">
+        Title="MainWindow" Height="500" Width="1500">
     <StackPanel Orientation="Horizontal" Name="stackPanelTest" Margin="0,0,2,0">
         <TabControl >
             <TabItem Header="WG" Name="tabWG">
@@ -51,6 +51,7 @@
                 <StackPanel Height="Auto" Width="Auto" Name="threadPanel"/>
             </ScrollViewer>
         </Grid>
+        <StackPanel>
         <TabControl Width="448">
             <TabItem Header="General Settings">
                 <StackPanel>
@@ -163,6 +164,12 @@
 
             </TabItem>
         </TabControl>
+            <StackPanel Orientation="Horizontal">
+                <Button Name="rerollPaper" Content="Re-Roll Wallaper Now" Margin="10" HorizontalAlignment="Left"/>
+                <Button Name="runArchive" Content="Run Archive Now" Margin="10" HorizontalAlignment="Center"/>
+                <Button Name="refreshThreads" Content="Refresh Threads Now" Margin="10" HorizontalAlignment="Right"/>
+            </StackPanel>
+        </StackPanel>
         <!--Button Content="Refresh Wallpaper" Width="75" Name="ReRoll"/-->
     </StackPanel>
 

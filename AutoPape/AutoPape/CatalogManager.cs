@@ -10,6 +10,9 @@ namespace AutoPape
 {
     class CatalogManager
     {
+        bool runningWallpaper = false;
+        bool runningArchive = false;
+        bool runningRefresh = false;
         public List<Catalog> catalogs;
         public Thread customThread;
         public List<string> boards;
@@ -42,6 +45,17 @@ namespace AutoPape
             //setPaper.Interval = 10000;
         }
 
+        public void refreshAll(System.Threading.Mutex refreshLock = null)
+        {
+            if (!runningRefresh) runningRefresh = true;
+            else return;
+            foreach (var catalog in catalogs)
+            {
+                catalog.refresh(refreshLock);
+            }
+            runningRefresh = false;
+        }
+
         public async void buildAllAsync()
         {
             await Task.Run(() => buildAll());
@@ -51,8 +65,7 @@ namespace AutoPape
             setPaper.Interval = (int)msToNextHour;
             refresh.Interval = toNextHalf;
             setPaper.Start();
-            //TODO: Uncomment when refresh is better
-            //refresh.Start();
+            refresh.Start();
             setPaperNonTick();
         }
         private void buildAll()
@@ -98,6 +111,7 @@ namespace AutoPape
         }
         public void refreshTick(object sender, EventArgs e)
         {
+
             refresh.Interval = 3600000;
             foreach (var catalog in catalogs)
             {
@@ -108,6 +122,8 @@ namespace AutoPape
 
         public void archiveTick(object sender, EventArgs e)
         {
+            if (!runningArchive) runningArchive = true;
+            else return;
             archive.Interval = 86400000;
             if (!manager.archiveSettings.autoArchive) return;
             foreach (var board in boards)
@@ -117,6 +133,7 @@ namespace AutoPape
                 Catalog toSave = new Catalog(board, manager, catalogType.archive);
                 toSave.buildAsync();
             }
+            runningArchive = false;
         }
 
         public void deepLockAll()
@@ -154,6 +171,8 @@ namespace AutoPape
         public void setWallaper()
         {
             //if (!mutex.WaitOne(300000)) return;
+            if (!runningWallpaper) runningWallpaper = true;
+            else return;
             lockAll();
             List<Tuple<Thread, ThreadImage>> tuple = new List<Tuple<Thread, ThreadImage>>();
             foreach(var catalog in catalogs)
@@ -212,6 +231,7 @@ namespace AutoPape
             manager.wallpaperManager.buildWallpaper();
             //mutex.ReleaseMutex();
             unlockAll();
+            runningWallpaper = false;
         }
 
         public async void setWallpaperAsync()

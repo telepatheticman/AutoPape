@@ -193,6 +193,23 @@ namespace AutoPape
             caManager.add(catalogWGDisk);
             caManager.add(catalogW);
             caManager.add(catalogWDisk);
+
+            rerollPaper.Click +=
+                (o, e) =>
+                {
+                    caManager.setWallpaperAsync();
+                };
+            runArchive.Click +=
+                (o, e) =>
+                {
+                    caManager.archiveTick(o, e);
+                };
+            refreshThreads.Click +=
+                (o, e) =>
+                {
+                    caManager.refreshAll();
+                };
+
             caManager.buildAllAsync();
             //catalogWG.buildCatalogInfoAsync(setWallpaper);
         }
@@ -271,10 +288,11 @@ namespace AutoPape
         {
             Mutex refreshLock = new Mutex();
             threadPanelManager.activeThread?.saveThreadAsync(refreshLock);
-            foreach(var thread in catalogWGDisk.threads)
-            {
-                thread.refreshAsync(refreshLock);
-            }
+            //foreach(var thread in catalogWGDisk.threads)
+            //{
+            //    thread.refreshAsync(refreshLock);
+            //}
+            caManager.refreshAll(refreshLock);
         }
 
         public void addBlackListItem(SettingsManager settings, string toAdd, bool fromList = false)
