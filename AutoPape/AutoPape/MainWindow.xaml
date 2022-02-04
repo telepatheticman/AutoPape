@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AutoPape"
         mc:Ignorable="d"
-        Title="MainWindow" Height="500" Width="1500">
+        Title="AutoPape" Height="500" Width="1500">
     <StackPanel Orientation="Horizontal" Name="stackPanelTest" Margin="0,0,2,0">
         <TabControl >
             <TabItem Header="WG" Name="tabWG">
@@ -160,9 +160,29 @@
                     </ScrollViewer>
                 </StackPanel>
             </TabItem>
-            <TabItem Header="Info">
-
-            </TabItem>
+                <TabItem Header="Info">
+                    <StackPanel>
+                        <TextBlock Width="350" Margin="5">
+                        Thank you for using AutoPape.
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" Width="350" Margin="5">
+                            This is a very early build of the application, with more features planned. As a result, there is 
+                            a very high chance of bug, instability, and unintended/unexpected behavior. If you observe any 
+                            issues that you find to be easily reproducible, please tell me about them. Instructions below.
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" Width="350" Margin="5">
+                            If you wish to get in contact with me, you can email me at AutoPape@not-studying.com.
+                            If you have a question, put QUESTION in your subject line. comments and suggestions should be COMMENT, 
+                            and bugs should be BUG. In the case of bugs, please provide as much detail as possible. 
+                            Include things like what you were doing, buttons you pressed, and what the end result was. 
+                            It could also potentially be helpful to provide me a copy of your settings file. Look for 
+                            Settings.XML in your AutoPape directory in AppData.
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" Width="400" Margin="10 50 10 5" TextAlignment="Center">
+                            Developed by Telepatheticman (https://github.com/telepatheticman)
+                        </TextBlock>
+                    </StackPanel>
+                </TabItem>
         </TabControl>
             <StackPanel Orientation="Horizontal">
                 <Button Name="rerollPaper" Content="Re-Roll Wallaper Now" Margin="10" HorizontalAlignment="Left"/>
