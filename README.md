@@ -37,3 +37,6 @@
   - Forces the wallpaper to the same height as the monitor. Width will scale proportionally.
 - ### Fill
   - Forces the wallpaper to the same width as the monitor. Height will scale proportionally.
+
+## Contact me:
+If you wish to get in contact with me, you can email me at AutoPape@not-studying.com. If you have a question, put QUESTION in your subject line. comments and suggestions should be COMMENT, and bugs should be BUG. In the case of bugs, please provide as much detail as possible. Include things like what you were doing, buttons you pressed, and what the end result was. It could also potentially be helpful to provide me a copy of your settings file. Look for Settings.XML in your AutoPape directory in AppData.
