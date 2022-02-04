@@ -214,11 +214,14 @@ namespace AutoPape
                             });
                             if (monitor.Image != null)
                             {
+                                /*
+                                 * This isjust to save an individual image that is being used as a wallpaper. Not for production.
                                 Directory.CreateDirectory(Path.Combine(Utility.pathToParent(), "CurrentPaper"));
                                 pair.Item1.saveImage(
                                     Path.Combine(Utility.pathToParent(), "CurrentPaper"),
                                     monitor.imageName,
                                     controlImageToUse);
+                                */
                                 break;
                             }
                             //imageUrl = pair.Item2.imageurl;
