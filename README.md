@@ -3,9 +3,10 @@
 #### Not in any way affiliated with or endorsed by 4chan community support LLC
 
 ## Disclaimer:
-### The boards being pulled from will occasionally have NSFW content in the threads. Most threads are marked as such in either the subject line or initial post text and can generally be sorted out by a keyword blacklist. Posters tend to stay on topic, so NSFW content is usually only found on NSFW threads. However, not all threads are explicitly marked and not all poster stay on topic. As a result, this tool should be regarded as NSFW. Users should be 18+ years of age.
+#### The boards being pulled from will occasionally have NSFW content in the threads. Most threads are marked as such in either the subject line or initial post text and can generally be sorted out by a keyword blacklist. Posters tend to stay on topic, so NSFW content is usually only found on NSFW threads. However, not all threads are explicitly marked and not all poster stay on topic. As a result, this tool should be regarded as NSFW. 
+### Users should be 18+ years of age.
 
-### In the future, more methods will be implemented to reduce how much NSFW content will make it onto a users desktop if they do not want it. For now, it is best to just filter out the keywords commonly associated with NSFW threads. The application will build a default list of terms that can later be expanded or reduced by the user as per their use case.
+#### In the future, more methods will be implemented to reduce how much NSFW content will make it onto a users desktop if they do not want it. For now, it is best to just filter out the keywords commonly associated with NSFW threads. The application will build a default list of terms that can later be expanded or reduced by the user as per their use case.
 
 ## Features:
 - Automatically apply wallpapers from the 4chan /wg/ - Wallpapers/General and /w/ - Anime/Wallpapers boards.
