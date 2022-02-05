@@ -29,6 +29,9 @@
   - A default wallpaper will be generated. It will be a random solid color and white text in the center showing the hex representation of the color.
   - Maybe be less picky.
   - Maybe get a monitor that isn't a weird resolution that no one likes/uses.
+## Notes:
+- Opposite Orientation doesn't work yet
+- First time startup will apply a wallpaper. This may take some time. It should speed up as long as the application stays open.
 ## Modes explained for narrower/Wider wallpapers:
 - ### Center
   - Centers the wallpaper on the screen. Narrower wallpapers will have a black boarder, wider wallpapers will be cut off on all sides
