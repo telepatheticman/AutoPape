@@ -299,8 +299,29 @@ namespace AutoPape
                     Image thumb = new Image();
                     if(i == 0)
                     {
-                        thumb.Source = new BitmapImage(new Uri(settings.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail)));
                         teaserPath = settings.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail);
+                        if(File.Exists(teaserPath))
+                        {
+                            thumb.Source = new BitmapImage(new Uri(teaserPath));
+                        }
+                        else
+                        {
+                            System.Drawing.ImageConverter converter = new System.Drawing.ImageConverter();
+                            byte[] imageByte = (byte[])converter.ConvertTo(AutoPape.Properties.Resources.NoImage, typeof(byte[]));
+
+                            MemoryStream ms = new MemoryStream(imageByte);
+                            ms.Position = 0;
+                            System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                            {
+                                System.Windows.Media.Imaging.BitmapImage imageBitmap = new System.Windows.Media.Imaging.BitmapImage();
+                                imageBitmap.BeginInit();
+                                imageBitmap.StreamSource = ms;
+                                imageBitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                                imageBitmap.EndInit();
+
+                                thumb.Source = imageBitmap;
+                            });
+                        }                        
                         teaserThumb = thumb;
                         i++;
                     }
@@ -356,6 +377,7 @@ namespace AutoPape
             threadPanel.activeThread = this;
             for(int i = 0; i < threadImages.Count(); i++)
             {
+                if (fromDisk && !File.Exists(threadImages[i].thumburl)) continue;
                 if (fromDisk)
                 {
                     System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate

@@ -22,6 +22,7 @@ using System.Threading;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System.Diagnostics;
+using System.IO;
 
 namespace AutoPape
 {
@@ -89,6 +90,7 @@ namespace AutoPape
 
         public MainWindow()
         {
+
             InitializeComponent();
 
             //setWallpaper = new Timer();
@@ -96,121 +98,124 @@ namespace AutoPape
             //setWallpaper.Interval = 5000;
             //setWallpaper.Tick += new EventHandler(setWallpaperTick);
 
-            MonitorBox.SelectionChanged += 
-                (o, e) => 
-                {
-                    setMonitorSettingInfo((MonitorSetting)MonitorBox.SelectedItem);
-                };
-
-            BlackListAdd.Click +=
-                (o, e) =>
-                {
-                    addBlackListItem(manager, BlackListText.Text);
-                };
-            WhiteListAdd.Click +=
-                (o, e) =>
-                {
-                    addWhiteListItem(manager, WhiteListText.Text);
-                };
-
-            startBrowse.Click +=
-                (o, e) =>
-                {
-                    saveBrowseClickedAsync();
-                };
-
-            setDirectory.Click +=
-                (o, e) =>
-                {
-                    setClicked();
-                };
-            applyArchive.Click +=
-                (o, e) =>
-                {
-                    applyArchiveSettings();
-                };
-            applyGeneral.Click +=
-                (o, e) =>
-                {
-                    applyGeneralSettings();
-                };
-            panelDropFiles.Drop +=
-                (o, e) =>
-                {
-                    fileDrop(o, e);
-                };
-
-            manager = new SettingsManager();
-            manager.loadSettings();
-
-            if(string.IsNullOrEmpty(manager.archiveSettings.limitUnits))
-            {
-                manager.archiveSettings.buildDefault();
-                manager.saveSettings();
-            }
 
 
 
-            setGeneralSettings();
-            setArchivesettings();
+             MonitorBox.SelectionChanged +=
+                 (o, e) =>
+                 {
+                     setMonitorSettingInfo((MonitorSetting)MonitorBox.SelectedItem);
+                 };
 
-            SaveDirectoryBox.Text = manager.saveDirectory;
+             BlackListAdd.Click +=
+                 (o, e) =>
+                 {
+                     addBlackListItem(manager, BlackListText.Text);
+                 };
+             WhiteListAdd.Click +=
+                 (o, e) =>
+                 {
+                     addWhiteListItem(manager, WhiteListText.Text);
+                 };
 
-            foreach(var item in manager.blackList.keyWords)
-            {
-                addBlackListItem(manager, item, true);
-            }
-            foreach (var item in manager.whiteList.keyWords)
-            {
-                addWhiteListItem(manager, item, true);
-            }
-            foreach (var monitor in manager.wallpaperManager.monitorSettings)
-            {
-                MonitorBox.Items.Add(monitor);
-                if(monitor.primary)
-                {
-                    MonitorBox.SelectedItem = monitor;
-                    setMonitorSettingInfo(monitor);
-                }
-            }
+             startBrowse.Click +=
+                 (o, e) =>
+                 {
+                     saveBrowseClickedAsync();
+                 };
 
-            SaveButton.Click += (o, e) =>
-            {
-                saveClicked();
-            };
+             setDirectory.Click +=
+                 (o, e) =>
+                 {
+                     setClicked();
+                 };
+             applyArchive.Click +=
+                 (o, e) =>
+                 {
+                     applyArchiveSettings();
+                 };
+             applyGeneral.Click +=
+                 (o, e) =>
+                 {
+                     applyGeneralSettings();
+                 };
+             panelDropFiles.Drop +=
+                 (o, e) =>
+                 {
+                     fileDrop(o, e);
+                 };
 
-            /*ReRoll.Click += (o, e) =>
-            {
-                catalogWGDisk.setWallpaperAsync();
-            };*/
-            threadPanelManager = new ThreadPanelManager(ThreadProgress, SaveButton, threadPanel);
-            catalogWG = new Catalog("wg", catalogPanelWG, threadPanelManager, manager, catalogType.current);
-            catalogWGDisk = new Catalog("wg", catalogPanelWGSaved, threadPanelManager, manager, catalogType.saved);
-            catalogW = new Catalog("w", catalogPanelW, threadPanelManager, manager, catalogType.current);
-            catalogWDisk = new Catalog("w", catalogPanelWSaved, threadPanelManager, manager, catalogType.saved);
-            caManager = new CatalogManager(manager);
-            caManager.add(catalogWG);
-            caManager.add(catalogWGDisk);
-            caManager.add(catalogW);
-            caManager.add(catalogWDisk);
+             manager = new SettingsManager();
+             manager.loadSettings();
 
-            rerollPaper.Click +=
-                (o, e) =>
-                {
-                    caManager.setWallpaperAsync();
-                };
-            runArchive.Click +=
-                (o, e) =>
-                {
-                    caManager.archiveTick(o, e);
-                };
-            refreshThreads.Click +=
-                (o, e) =>
-                {
-                    caManager.refreshAll();
-                };
+             if (string.IsNullOrEmpty(manager.archiveSettings.limitUnits))
+             {
+                 manager.archiveSettings.buildDefault();
+                 manager.saveSettings();
+             }
 
-            caManager.buildAllAsync();
+
+
+             setGeneralSettings();
+             setArchivesettings();
+
+             SaveDirectoryBox.Text = manager.saveDirectory;
+
+             foreach (var item in manager.blackList.keyWords)
+             {
+                 addBlackListItem(manager, item, true);
+             }
+             foreach (var item in manager.whiteList.keyWords)
+             {
+                 addWhiteListItem(manager, item, true);
+             }
+             foreach (var monitor in manager.wallpaperManager.monitorSettings)
+             {
+                 MonitorBox.Items.Add(monitor);
+                 if (monitor.primary)
+                 {
+                     MonitorBox.SelectedItem = monitor;
+                     setMonitorSettingInfo(monitor);
+                 }
+             }
+
+             SaveButton.Click += (o, e) =>
+             {
+                 saveClicked();
+             };
+
+             /*ReRoll.Click += (o, e) =>
+             {
+                 catalogWGDisk.setWallpaperAsync();
+             };*/
+             threadPanelManager = new ThreadPanelManager(ThreadProgress, SaveButton, threadPanel);
+             catalogWG = new Catalog("wg", catalogPanelWG, threadPanelManager, manager, catalogType.current);
+             catalogWGDisk = new Catalog("wg", catalogPanelWGSaved, threadPanelManager, manager, catalogType.saved);
+             catalogW = new Catalog("w", catalogPanelW, threadPanelManager, manager, catalogType.current);
+             catalogWDisk = new Catalog("w", catalogPanelWSaved, threadPanelManager, manager, catalogType.saved);
+             caManager = new CatalogManager(manager);
+             caManager.add(catalogWG);
+             caManager.add(catalogWGDisk);
+             caManager.add(catalogW);
+             caManager.add(catalogWDisk);
+
+             rerollPaper.Click +=
+                 (o, e) =>
+                 {
+                     caManager.setWallpaperAsync();
+                 };
+             runArchive.Click +=
+                 (o, e) =>
+                 {
+                     caManager.archiveTick(o, e);
+                 };
+             refreshThreads.Click +=
+                 (o, e) =>
+                 {
+                     caManager.refreshAll();
+                 };
+
+             caManager.buildAllAsync();
             //catalogWG.buildCatalogInfoAsync(setWallpaper);
         }
 

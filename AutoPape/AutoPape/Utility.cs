@@ -232,7 +232,7 @@ namespace AutoPape
             //This can be re-writen as a series of &= operations on valid
             bool valid = false;
             bool thumbnailCheck = image.resolution <= 1;
-            if (!(settings.orientation == image.orientation)) return false;
+            if (settings.orientation != image.orientation) return false;
             double tolerance = thumbnailCheck ? .05 : .02; // +/- .05 if thumbnail, +/- .02 if full
             double ratio = thumbnailCheck ? image.thumbAspectRatio : image.aspectRatio;
             valid |= settings.allowWider && ratio > settings.aspectRatio;

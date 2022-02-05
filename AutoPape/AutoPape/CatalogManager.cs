@@ -198,6 +198,7 @@ namespace AutoPape
                             pair.Item1.buildThreadImageInfo();
                         if (Utility.validImage(pair.Item2, monitor, pair.Item1.client))
                         {
+                            if (pair.Item1.fromDisk && !File.Exists(pair.Item2.imageurl)) continue;
                             System.Windows.Controls.Image controlImageToUse = null;
                             System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                             {
