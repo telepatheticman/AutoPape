@@ -48,7 +48,7 @@ namespace AutoPape
 
         public void buildDefault()
         {
-            autoArchive = true;
+            autoArchive = false;
             archiveBadFit = true;
             archiveBlacklist = true;
             archiveNonWhitelist = true;
@@ -56,7 +56,7 @@ namespace AutoPape
             saveBadFit = true;
             saveBlacklist = true;
             saveNonWhitelist = true;
-            limitSpace = false;
+            limitSpace = true;
             limitBytes = 10;
             limitBytes *= 1024;
             limitBytes *= 1024;
