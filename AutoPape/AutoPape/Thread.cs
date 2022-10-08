@@ -100,13 +100,7 @@ namespace AutoPape
         [XmlElement("Teaser")]
         public string teaser;
         [XmlIgnore]
-        Regex rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/wg\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
-        [XmlIgnore]
-        Regex rxBlock;
-        [XmlIgnore]
         string extentions = "jpg|png|jpeg";
-        [XmlIgnore]
-        Regex rxNames = new Regex("[0-9]+");
         [XmlIgnore]
         public HttpClient client = null;
         [XmlIgnore]
@@ -145,8 +139,6 @@ namespace AutoPape
             this.threadPanel = threadPanel;
             threadImages = new List<ThreadImage>();
             client = new HttpClient();
-            rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/"+board+@"\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
-            rxBlock = new Regex(@"\<blockquote.*?\<\/blockquote\>");
             threadButton = new ThreadButton();
             mutex = new Mutex();
             this.settings = settings;
@@ -213,8 +205,10 @@ namespace AutoPape
                 return;
             }
             string result = task.GetAwaiter().GetResult();
+            var rxBlock = new Regex(@"\<blockquote.*?\<\/blockquote\>");
             var Blocks = rxBlock.Matches(result);
-            foreach(var badBlock in Blocks)
+            var rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/" + board + @"\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
+            foreach (var badBlock in Blocks)
             {
                 var imageLinks = rxImages.Matches(badBlock.ToString());
                 var replaceString = badBlock.ToString();
@@ -226,8 +220,8 @@ namespace AutoPape
             }    
             var images = rxImages.Matches(result);
             bool firstThumb = true;
-
-            for(int i = 0; i < images.Count; i+=3)
+            Regex rxNames = new Regex("[0-9]+");
+            for (int i = 0; i < images.Count; i+=3)
             {
                 bool alreadyHave = false;
                 foreach(var image in threadImages)
@@ -289,8 +283,6 @@ namespace AutoPape
             this.sub = from.sub;
             this.teaser = from.teaser;
             this.threadImages = from.threadImages;
-            this.rxImages = new Regex(@"(i\.4cdn|is2\.4chan)\.org\/" + board + @"\/[0-9]+s?\.(?i)[a-zA-Z0-9]+");
-            this.rxBlock = new Regex(@"\<blockquote.*?\<\/blockquote\>");
             int i = 0;
             foreach(var threadImage in this.threadImages)
             {
@@ -433,7 +425,7 @@ namespace AutoPape
             if (!Lock()) return;
             refreshLock?.WaitOne(300000);
             if (fromDisk) return;
-            if (!threadPanel.startProc(threadImages.Count(), false)) return;
+            if (!archive && !threadPanel.startProc(threadImages.Count(), false)) return;
 
             if (archive && (!settings.archiveSettings.archiveBlacklist ||
                 !settings.archiveSettings.archiveNonWhitelist) &&
@@ -506,23 +498,30 @@ namespace AutoPape
                     }
 
                     saveImage(fullDirectory, thread.imagename, toSave);
+                    toSave = null;
                     Image thumbToSave =
                     Utility.imageFromURL(
                         "https://" + thread.thumburl,
                         client,
                         thread.thumburl == null);
                     saveImage(thumbDirecotry, thread.imagename, thumbToSave);
+                    thumbToSave = null;
                 }
                 else if(thread.imagename != null)
                 {
                     Image full = Utility.imageFromDisk(settings.pathToImage(board, threadId, thread.imagename, imageType.fullImage));
+                    if(full == null)
+                    {
+                        image++;
+                        continue;
+                    }
                     System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                     {
                         thread.width = ((BitmapImage)full.Source).PixelWidth;
                         thread.height = ((BitmapImage)full.Source).PixelHeight;
                     });
                 }
-                threadPanel.Add(image);
+                if(!archive) threadPanel.Add(image);
                 image++;
             }
 
@@ -537,7 +536,7 @@ namespace AutoPape
             xmlSerializer.Serialize(stream, this);
             stream.Flush();
             stream.Close();
-            threadPanel.endProc();
+            if(!archive) threadPanel.endProc();
             refreshLock?.ReleaseMutex();
             Unlock();
         }

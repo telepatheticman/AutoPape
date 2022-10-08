@@ -14,6 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Text.RegularExpressions;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
+using System.Net;
 
 namespace AutoPape
 {
@@ -106,6 +107,8 @@ namespace AutoPape
             Image image = null;
             byte[] imageByte = null;
 
+            WebClient webClient = new WebClient();
+
             if (!url.Contains("https")) url = "https://" + url;
 
             if(deleted)
@@ -119,8 +122,9 @@ namespace AutoPape
                 {
                     try
                     {
-                        var thumbNailTask = client.GetByteArrayAsync(url);
-                        imageByte = thumbNailTask.GetAwaiter().GetResult();
+                        imageByte = webClient.DownloadData(url);
+                        //var thumbNailTask = client.GetByteArrayAsync(url);
+                        //imageByte = thumbNailTask.GetAwaiter().GetResult();
                         break;
                     }
                     catch(Exception ex)

@@ -209,16 +209,33 @@ namespace AutoPape
                 xMax = Math.Max(xMax, zScreen[i].Bounds.Left + zScreen[i].Bounds.Width);
                 yMax = Math.Max(yMax, zScreen[i].Bounds.Top + zScreen[i].Bounds.Height);
 
+                bool overlap = false;
 
-                monitorSettings.Add(new MonitorSetting()
+                foreach(var setting in monitorSettings)
                 {
-                    x = zScreen[i].Bounds.Left,
-                    y = zScreen[i].Bounds.Top,
-                    width = zScreen[i].Bounds.Width,
-                    height = zScreen[i].Bounds.Height,
-                    name = zScreen[i].DeviceName,
-                    primary = zScreen[i].Primary
-                });
+                    if (zScreen[i].Primary) break;
+                    if
+                        (
+                        zScreen[i].Bounds.Left >= setting.x &&
+                        zScreen[i].Bounds.Left < setting.x + setting.width &&
+                        zScreen[i].Bounds.Top >= setting.y &&
+                        zScreen[i].Bounds.Top < setting.y + setting.height
+                        )
+                        overlap = true;
+                }
+
+                if (!overlap)
+                {
+                    monitorSettings.Add(new MonitorSetting()
+                    {
+                        x = zScreen[i].Bounds.Left,
+                        y = zScreen[i].Bounds.Top,
+                        width = zScreen[i].Bounds.Width,
+                        height = zScreen[i].Bounds.Height,
+                        name = zScreen[i].DeviceName,
+                        primary = zScreen[i].Primary
+                    });
+                }
 
             }
 

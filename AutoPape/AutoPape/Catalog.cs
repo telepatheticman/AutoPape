@@ -279,7 +279,7 @@ namespace AutoPape
                 teaser = Utility.cleanArchiveString(teaser);
                 threads.Add(new Thread(board, threadID, threadPanel, sub, teaser, manager));
                 //buildItem(threads.Last(), true);
-                threads.Last().buildThreadFromWeb();
+                threads.Last().buildThreadFromWeb(true);
                 threads.Last().saveThread(archive: true);
             }
         }
