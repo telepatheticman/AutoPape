@@ -36,6 +36,7 @@ namespace AutoPape
         public bool allowOpposite = false;
         public bool allowNarrower = false;
         public bool allowWider = false;
+        public bool useMonitor = false;
         [XmlIgnore]
         public int x = 0;
         [XmlIgnore]
@@ -163,6 +164,7 @@ namespace AutoPape
             wallpaper = new Bitmap(width, height);
             foreach(var setting in monitorSettings)
             {
+                if (!setting.useMonitor) continue;
                 if (setting.Image != null)
                 {
                     buildPortionMode(setting);

@@ -117,6 +117,9 @@ namespace AutoPape
         private SettingsManager settings;
         [XmlIgnore]
         public bool webRemoved = false;
+        [XmlIgnore]
+        //Assuming always unique monitor name. Valid assumption?
+        public Dictionary<string, List<ThreadImage>> validImages; //TODO: A bit convoluted.
 
         public Thread()
         {
@@ -127,6 +130,8 @@ namespace AutoPape
             threadImages = new List<ThreadImage>();
             threadButton = new ThreadButton();
             mutex = new Mutex();
+            validImages = new Dictionary<string, List<ThreadImage>>();
+            
         }
 
         public Thread(string board, string threadId, ThreadPanelManager threadPanel, string sub, string teaser, SettingsManager settings)
@@ -142,6 +147,11 @@ namespace AutoPape
             threadButton = new ThreadButton();
             mutex = new Mutex();
             this.settings = settings;
+            validImages = new Dictionary<string, List<ThreadImage>>();
+            foreach(var monitor in this.settings.wallpaperManager.monitorSettings)
+            {
+                validImages.Add(monitor.ToString(), new List<ThreadImage>());
+            }
         }
 
         public bool Lock()
@@ -161,6 +171,16 @@ namespace AutoPape
             }
         }
 
+        private void addValid(ThreadImage image)
+        {
+            foreach (var monitor in this.settings.wallpaperManager.monitorSettings)
+            {
+                if (Utility.validImage(image, monitor))
+                {
+                    validImages[monitor.ToString()].Add(image);
+                }
+            }
+        }
         public void buildThreadImageInfo()
         {
             if(!Lock()) return;
@@ -171,7 +191,6 @@ namespace AutoPape
                     Image thumb =
                         Utility.imageFromURL(
                             "https://" + image.thumburl,
-                            client,
                             image.thumburl == null);
                     System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                     {
@@ -242,12 +261,15 @@ namespace AutoPape
                     if (firstThumb && needsTeaserImage)
                     {
                         teaserThumb =
-                            Utility.imageFromURL(images[i + 2].Value, client, false);
+                            Utility.imageFromURL(images[i + 2].Value, false);
                         firstThumb = false;
                     }
                 }
             }
-
+            foreach(var image in threadImages)
+            {
+                addValid(image);
+            }
             //buildThreadImageInfoAsync();
             buildItem();
             Unlock();
@@ -262,6 +284,10 @@ namespace AutoPape
         {
             if (!Lock()) return;
             this.settings = settings;
+            foreach (var monitor in this.settings.wallpaperManager.monitorSettings)
+            {
+                validImages.Add(monitor.ToString(), new List<ThreadImage>());
+            }
             fromDisk = true;
             XmlSerializer xmlSerializer = new XmlSerializer(this.GetType());
             FileStream stream = new FileStream(
@@ -319,6 +345,7 @@ namespace AutoPape
                     }
                     threadImage.imageurl = settings.pathToImage(board, threadId, threadImage.imagename, imageType.fullImage);
                     threadImage.thumburl = settings.pathToImage(board, threadId, threadImage.imagename, imageType.thumbnail);
+                    addValid(threadImage);
                 });
             }
         }
@@ -338,6 +365,7 @@ namespace AutoPape
                 image.width = imageInfo.PixelWidth;
                 image.height = imageInfo.PixelHeight;
                 threadImages.Add(image);
+                addValid(image);
             }
         }
 
@@ -382,7 +410,6 @@ namespace AutoPape
                     thumbs[i] =
                     Utility.imageFromURL(
                     "https://" + threadImages[i].thumburl,
-                    client,
                     threadImages[i].thumburl == null);
                 }
                 System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
@@ -478,7 +505,6 @@ namespace AutoPape
                     Image toSave =
                     Utility.imageFromURL(
                         "https://" + thread.imageurl,
-                        client,
                         thread.imageurl == null);
                     System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                     {
@@ -492,7 +518,7 @@ namespace AutoPape
                         bool valid = false;
                         foreach(var mon in settings.wallpaperManager.monitorSettings)
                         {
-                            valid |= Utility.validImage(thread, mon, client);
+                            valid |= Utility.validImage(thread, mon);
                         }
                         if (!valid) return;
                     }
@@ -502,7 +528,6 @@ namespace AutoPape
                     Image thumbToSave =
                     Utility.imageFromURL(
                         "https://" + thread.thumburl,
-                        client,
                         thread.thumburl == null);
                     saveImage(thumbDirecotry, thread.imagename, thumbToSave);
                     thumbToSave = null;

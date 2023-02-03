@@ -174,64 +174,47 @@ namespace AutoPape
             if (!runningWallpaper) runningWallpaper = true;
             else return;
             lockAll();
-            List<Tuple<Thread, ThreadImage>> tuple = new List<Tuple<Thread, ThreadImage>>();
+            List<Thread> tempThreadList = new List<Thread>();
             foreach(var catalog in catalogs)
             {
                 if (!manager.usingWG && catalog.board == "wg") continue;
                 if (!manager.usingW && catalog.board == "w") continue;
-                tuple.AddRange(catalog.ToTupleList());
+                tempThreadList.AddRange(catalog.threads);
             }
             customThread.buildFromCustom();
-            tuple.AddRange(customThread.ToTupleList());
             foreach (var monitor in manager.wallpaperManager.monitorSettings)
             {
-                tuple.Shuffle();
-                monitor.mode = fitMode.fit;
-                //string imageUrl = "";
-                //string threadUsed = "";
-
-                foreach (var pair in tuple)
+                if (!monitor.useMonitor) continue;
+                tempThreadList.Shuffle();
+                foreach (var thread in tempThreadList)
                 {
-                    if (manager.validThread(pair.Item1))
+                    if (manager.validThread(thread))
                     {
-                        if(!pair.Item1.fromDisk)
-                            pair.Item1.buildThreadImageInfo();
-                        if (Utility.validImage(pair.Item2, monitor, pair.Item1.client))
+                        if(thread.validImages[monitor.ToString()].Count > 0)
                         {
-                            if (pair.Item1.fromDisk && !File.Exists(pair.Item2.imageurl)) continue;
+                            List<ThreadImage> images = thread.validImages[monitor.ToString()];
+                            images.Shuffle();
+                            if (thread.fromDisk && !File.Exists(images.First().imageurl)) continue;
                             System.Windows.Controls.Image controlImageToUse = null;
                             System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                             {
-                                controlImageToUse = pair.Item1.fromDisk ?
-                                    Utility.imageFromDisk(pair.Item2.imageurl) :
-                                    Utility.imageFromURL(pair.Item2.imageurl, pair.Item1.client, false);
-                                System.Drawing.Image imageToUse = 
+                                controlImageToUse = thread.fromDisk ?
+                                    Utility.imageFromDisk(images.First().imageurl) :
+                                    Utility.imageFromURL(images.First().imageurl, false);
+                                System.Drawing.Image imageToUse =
                                     Utility.controlToDrawingImage(controlImageToUse);
                                 monitor.Image = imageToUse;
-                                monitor.board = pair.Item1.board;
-                                monitor.thread = pair.Item1.threadId;
-                                monitor.imageName = Utility.nameFromURL(pair.Item2.imageurl);
-                                //monitor.setMode(pair.Item2);
+                                monitor.board = thread.board;
+                                monitor.thread = thread.threadId;
+                                monitor.imageName = Utility.nameFromURL(images.First().imageurl);
                             });
-                            if (monitor.Image != null)
-                            {
-                                /*
-                                 * This isjust to save an individual image that is being used as a wallpaper. Not for production.
-                                Directory.CreateDirectory(Path.Combine(Utility.pathToParent(), "CurrentPaper"));
-                                pair.Item1.saveImage(
-                                    Path.Combine(Utility.pathToParent(), "CurrentPaper"),
-                                    monitor.imageName,
-                                    controlImageToUse);
-                                */
-                                break;
-                            }
-                            //imageUrl = pair.Item2.imageurl;
-                            //threadUsed = pair.Item1.threadId;
+                            break;
                         }
                     }
                 }
+                monitor.mode = fitMode.fit;
+                
             }
-            tuple.Clear();
             manager.wallpaperManager.buildWallpaper();
             //mutex.ReleaseMutex();
             unlockAll();

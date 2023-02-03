@@ -102,7 +102,7 @@ namespace AutoPape
             return path;
         }
 
-        public static Image imageFromURL(string url, HttpClient client, bool deleted, int attempts = 3)
+        public static Image imageFromURL(string url, bool deleted, int attempts = 3)
         {
             Image image = null;
             byte[] imageByte = null;
@@ -231,9 +231,10 @@ namespace AutoPape
             return ms;
         }
         //Should be writen for a bit safer saved thread check
-        public static bool validImage(ThreadImage image, MonitorSetting settings, HttpClient client)
+        public static bool validImage(ThreadImage image, MonitorSetting settings)
         {
             //This can be re-writen as a series of &= operations on valid
+            if (!settings.useMonitor) return false;
             bool valid = false;
             bool thumbnailCheck = image.resolution <= 1;
             if (settings.orientation != image.orientation) return false;
@@ -248,7 +249,6 @@ namespace AutoPape
                 Image full =
                     imageFromURL(
                         "https://" + image.imageurl,
-                        client,
                         image.imageurl == null);
                 if (full == null) return false;
                 System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate

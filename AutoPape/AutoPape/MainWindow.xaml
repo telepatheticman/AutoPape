@@ -123,6 +123,7 @@
                 <StackPanel Width="270" >
                     <TextBlock Text="Monitor: "/>
                     <ComboBox Width="120" Name="MonitorBox"/>
+                    <CheckBox Content="Use Monitor?" x:Name="useMonitor"/>
                     <TextBlock TextWrapping="Wrap" Text="Orientation: " Name="orientationInfo"/>
                     <CheckBox Content="Allow opposite orientation" Name="allowOpposite"/>
                     <TextBlock TextWrapping="Wrap" Text="Resolution: " Name="resolutionInfo"/>

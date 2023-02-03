@@ -59,6 +59,7 @@ namespace AutoPape
         {
             orientationInfo.Text = "Orientation: " + monitor.orientation.ToString();
             allowOpposite.IsChecked = monitor.allowOpposite;
+            useMonitor.IsChecked = monitor.useMonitor;
             resolutionInfo.Text = $"Resolution: {monitor.width}x{monitor.height}";
             narrowMode.Items.Clear();
             MinRsolution.Text = monitor.minimumResolution.ToString();
@@ -80,6 +81,7 @@ namespace AutoPape
 
         private void getMonitorSettingInfo(MonitorSetting monitor)
         {
+            monitor.useMonitor = (bool)useMonitor.IsChecked;
             monitor.allowOpposite = (bool)allowOpposite.IsChecked;
             monitor.narrowOption = (fit)narrowMode.SelectedItem;
             monitor.wideOption = (fit)wideMode.SelectedItem;

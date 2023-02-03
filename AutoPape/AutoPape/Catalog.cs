@@ -322,7 +322,6 @@ namespace AutoPape
                 threads.Last().teaserThumb =
                     Utility.imageFromURL(
                         $"https://i.4cdn.org/{board}/{catalogThread.imgurl}s.jpg",
-                        client,
                         catalogThread.imgurl == "deleted");
                 //threads.Last().buildThreadImageInfoAsync();
                 threads.Last().buildThreadFromWebAsync();
@@ -444,13 +443,13 @@ namespace AutoPape
                 {
                     if(manager.validThread(pair.Item1))
                     {
-                        if (Utility.validImage(pair.Item2, monitor, client))
+                        if (Utility.validImage(pair.Item2, monitor))
                         {
                             System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
                             {
                                 System.Drawing.Image imageToUse = pair.Item1.fromDisk ?
                                 Utility.controlToDrawingImage(Utility.imageFromDisk(pair.Item2.imageurl)) :
-                                Utility.controlToDrawingImage(Utility.imageFromURL(pair.Item2.imageurl, client, false));
+                                Utility.controlToDrawingImage(Utility.imageFromURL(pair.Item2.imageurl, false));
                                 monitor.Image = imageToUse;
                                 monitor.board = board;
                                 monitor.thread = pair.Item1.threadId;
